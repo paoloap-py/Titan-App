@@ -16,7 +16,9 @@ import {
   Flame,
   Clock,
   Zap,
-  Accessibility
+  Accessibility,
+  Weight,
+  Target
 } from 'lucide-react';
 import { 
   ResponsiveContainer,
@@ -152,12 +154,6 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
   }
 ];
 
-const calculate1RM = (weight: number, reps: number): number => {
-  if (reps === 1) return weight;
-  if (reps <= 0 || weight <= 0) return 0;
-  return Math.round(weight * (1 + reps / 30));
-};
-
 const formatDuration = (ms: number) => {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const mins = Math.floor(totalSeconds / 60);
@@ -165,14 +161,21 @@ const formatDuration = (ms: number) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const StatCard: React.FC<{ label: string; value: string; accent: string; subValue?: string; subColor?: string }> = ({ label, value, accent, subValue, subColor }) => (
-  <div className={`bg-[#0e0e0e] border border-white/5 p-6 rounded-3xl flex-1`}>
-    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">{label}</p>
+const StatCard: React.FC<{ 
+  label: string; 
+  value: string; 
+  accent: string; 
+  icon?: React.ReactNode;
+}> = ({ label, value, accent, icon }) => (
+  <div className={`bg-[#0e0e0e] border border-white/5 p-6 rounded-3xl flex flex-col justify-between transition-all hover:border-white/10 group`}>
+    <div className="flex justify-between items-start mb-4">
+      <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{label}</p>
+      <div className="text-zinc-700 group-hover:text-zinc-500 transition-colors">
+        {icon}
+      </div>
+    </div>
     <div className="flex items-baseline gap-2">
       <p className="text-3xl font-black tracking-tighter" style={{ color: accent }}>{value}</p>
-      {subValue && (
-        <span className="text-[10px] font-black uppercase tracking-tighter" style={{ color: subColor }}>{subValue}</span>
-      )}
     </div>
   </div>
 );
@@ -193,7 +196,7 @@ const Dashboard: React.FC<{
   [currentWeekSessions]);
 
   const weeklyStretchingCount = useMemo(() => 
-    currentWeekSessions.filter(s => s.stretchingCompleted?.every(v => v === true)).length, 
+    currentWeekSessions.filter(s => s.stretchingCompleted && s.stretchingCompleted.length > 0 && s.stretchingCompleted.every(v => v === true)).length, 
   [currentWeekSessions]);
 
   const weeklySessionCount = useMemo(() => 
@@ -231,12 +234,12 @@ const Dashboard: React.FC<{
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="SESSIONS" value={`${weeklySessionCount}/5`} accent={protocol.accentColor} />
-        <StatCard label="CARDIO" value={`${weeklyCardioCount}/5`} accent="#f97316" />
-        <StatCard label="STRETCHING" value={`${weeklyStretchingCount}/5`} accent="#f97316" />
-        <StatCard label="TOTAL TONNAGE" value={`${totalTonnage.toFixed(1)}t`} accent={protocol.accentColor} />
-        <StatCard label="MAX MEADOWS" value={`${maxes.meadowsRow}kg`} accent={protocol.accentColor} />
-        <StatCard label="PROTOCOL" value={protocol.name} accent={protocol.accentColor} />
+        <StatCard label="SESSIONS" value={`${weeklySessionCount}/5`} accent={protocol.accentColor} icon={<Target size={16} />} />
+        <StatCard label="CARDIO" value={`${weeklyCardioCount}/5`} accent="#f97316" icon={<Zap size={16} />} />
+        <StatCard label="STRETCHING" value={`${weeklyStretchingCount}/5`} accent="#f97316" icon={<Accessibility size={16} />} />
+        <StatCard label="TOTAL TONNAGE" value={`${totalTonnage.toFixed(1)}t`} accent={protocol.accentColor} icon={<Weight size={16} />} />
+        <StatCard label="MAX MEADOWS" value={`${maxes.meadowsRow}kg`} accent={protocol.accentColor} icon={<Trophy size={16} />} />
+        <StatCard label="PROTOCOL" value={protocol.name} accent={protocol.accentColor} icon={<Settings2 size={16} />} />
       </div>
 
       <div className="grid grid-cols-1 gap-6">
