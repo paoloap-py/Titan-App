@@ -9,12 +9,9 @@ import {
   X,
   Check,
   BarChart3,
-  AlertTriangle,
   User,
   Settings2,
-  ChevronRight,
   Flame,
-  Clock,
   Zap,
   Accessibility,
   Weight,
@@ -34,10 +31,7 @@ import {
   MaxStats, 
   Protocol, 
   UserSettings, 
-  ExercisePR,
-  BodyWeight,
-  BodyMeasurement,
-  Alert
+  BodyWeight
 } from './types';
 import { getBodyHighlighterMuscles } from './muscleMapping';
 
@@ -357,4 +351,365 @@ const WorkoutLogger: React.FC<{
       if (ex.id !== exId) return ex;
       const newSets = ex.sets.map((s, i) => i === setIdx ? { ...s, completed: !s.completed } : s);
       const justCompleted = newSets[setIdx].completed;
-      if (justCompleted) onStartRest(ex
+      if (justCompleted) onStartRest(ex.hasLongRest ? 180 : 90);
+      return { ...ex, sets: newSets };
+    }));
+  };
+
+  const addSet = (exId: string) => {
+    setExercises(prev => prev.map(ex => {
+      if (ex.id !== exId) return ex;
+      const lastSet = ex.sets[ex.sets.length - 1];
+      return { ...ex, sets: [...ex.sets, { ...lastSet, completed: false }] };
+    }));
+  };
+
+  const currentTemplate = protocol.days.find(d => d.day === day);
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-32">
+      <header className="flex justify-between items-center">
+        <h2 className="text-4xl font-black uppercase tracking-tighter">LOG SESSION</h2>
+        <div className="flex gap-2">
+          <div className="bg-[#0e0e0e] border border-white/5 rounded-xl px-4 py-2 text-center">
+            <span className="block text-[8px] font-black text-zinc-500 uppercase mb-1">WEEK</span>
+            <input type="number" value={week} onChange={e => setWeek(parseInt(e.target.value) || 1)} className="bg-transparent text-white font-black text-lg w-8 text-center" />
+          </div>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {protocol.days.map(t => (
+          <button 
+            key={t.day} 
+            onClick={() => loadTemplate(t.day)} 
+            className={`py-4 px-2 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${day === t.day ? 'text-white' : 'bg-[#0e0e0e] border-white/5 text-gray-500 hover:text-white'}`}
+            style={{ backgroundColor: day === t.day ? protocol.accentColor : undefined }}
+          >
+            {t.name}
+          </button>
+        ))}
+      </div>
+
+      {currentTemplate && (
+        <div className="space-y-4">
+          <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6">
+            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2"><Flame size={14} /> Warmup Protocol</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {currentTemplate.warmup.map((w, idx) => (
+                <button key={idx} onClick={() => setWarmupStatus(prev => prev.map((v, i) => i === idx ? !v : v))} className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${warmupStatus[idx] ? 'bg-white/5 border-white/10 text-white' : 'border-white/5 text-zinc-500'}`}>
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border ${warmupStatus[idx] ? 'bg-green-500 border-green-500 text-black' : 'border-white/10'}`}>
+                    {warmupStatus[idx] && <Check size={12} strokeWidth={4} />}
+                  </div>
+                  <span className="text-[11px] font-bold uppercase">{w}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {exercises.map(ex => (
+          <div key={ex.id} className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6 space-y-4">
+            <div className="flex justify-between items-start">
+              <h3 className="text-xl font-black uppercase tracking-tighter leading-tight">{ex.name}</h3>
+              <div className="flex gap-2">
+                 <span className="text-[9px] font-black text-white/40 bg-white/5 px-2 py-1 rounded uppercase">{ex.hasLongRest ? '⏱️ 3m rest' : '90s rest'}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {ex.sets.map((set, sIdx) => (
+                <div key={sIdx} className="flex items-center gap-4 animate-in slide-in-from-left duration-300">
+                  <div className="w-6 text-[10px] font-black text-zinc-600">#{sIdx + 1}</div>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <input type="number" placeholder="KG" className="bg-black border border-white/10 rounded-xl px-4 py-3 w-full text-center font-mono text-lg font-bold" value={set.weight || ''} onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setExercises(prev => prev.map(e => e.id === ex.id ? { ...e, sets: e.sets.map((s, i) => i === sIdx ? { ...s, weight: val } : s) } : e));
+                      }} />
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[7px] font-black text-zinc-600 uppercase tracking-widest">WEIGHT</span>
+                    </div>
+                    <div className="relative">
+                      <input type="number" placeholder="REPS" className="bg-black border border-white/10 rounded-xl px-4 py-3 w-full text-center font-mono text-lg font-bold" value={set.reps || ''} onChange={e => {
+                        const val = parseInt(e.target.value) || 0;
+                        setExercises(prev => prev.map(e => e.id === ex.id ? { ...e, sets: e.sets.map((s, i) => i === sIdx ? { ...s, reps: val } : s) } : e));
+                      }} />
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[7px] font-black text-zinc-600 uppercase tracking-widest">REPS</span>
+                    </div>
+                  </div>
+                  <button onClick={() => toggleComplete(ex.id, sIdx)} className={`p-4 rounded-xl border-2 transition-all ${set.completed ? 'bg-green-500 border-green-500 text-black' : 'border-white/10 text-transparent'}`}>
+                    <Check size={20} strokeWidth={4} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => addSet(ex.id)} className="w-full py-3 border border-dashed border-white/10 rounded-xl font-black text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/20 transition-all">+ Add Set</button>
+          </div>
+        ))}
+      </div>
+
+      {currentTemplate && (
+        <div className="space-y-4">
+          <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6">
+            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2"><Accessibility size={14} /> Stretching Protocol</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {currentTemplate.stretching.map((s, idx) => (
+                <button key={idx} onClick={() => setStretchingStatus(prev => prev.map((v, i) => i === idx ? !v : v))} className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${stretchingStatus[idx] ? 'bg-white/5 border-white/10 text-white' : 'border-white/5 text-zinc-500'}`}>
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border ${stretchingStatus[idx] ? 'bg-green-500 border-green-500 text-black' : 'border-white/10'}`}>
+                    {stretchingStatus[idx] && <Check size={12} strokeWidth={4} />}
+                  </div>
+                  <span className="text-[11px] font-bold uppercase">{s}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => setCardioCompleted(!cardioCompleted)} className={`w-full flex items-center justify-between p-6 rounded-3xl border transition-all ${cardioCompleted ? 'bg-orange-500/10 border-orange-500 text-orange-500' : 'bg-[#0e0e0e] border-white/5 text-zinc-500'}`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${cardioCompleted ? 'bg-orange-500 border-orange-500 text-black' : 'border-white/10'}`}>
+                <Zap size={20} strokeWidth={3} />
+              </div>
+              <div>
+                <span className="block font-black uppercase tracking-tighter text-lg">Post-Workout Cardio</span>
+                <span className="block text-[10px] font-bold uppercase tracking-widest opacity-60">15-20m Incline Walk / Bike</span>
+              </div>
+            </div>
+            {cardioCompleted && <Check size={24} strokeWidth={4} />}
+          </button>
+        </div>
+      )}
+
+      <button 
+        onClick={() => onSave({ 
+          id: crypto.randomUUID(), 
+          date: new Date().toISOString(), 
+          week, 
+          day, 
+          exercises, 
+          protocolId: protocol.id, 
+          stretchingCompleted: stretchingStatus, 
+          cardioCompleted, 
+          warmupCompleted: warmupStatus 
+        })} 
+        className="w-full py-6 text-white rounded-3xl font-black text-xl tracking-tighter uppercase shadow-2xl transition-transform active:scale-95"
+        style={{ backgroundColor: protocol.accentColor }}
+      >
+        COMMIT SESSION
+      </button>
+    </div>
+  );
+};
+
+const HistoryView: React.FC<{ sessions: WorkoutSession[]; onDelete: (id: string) => void; protocols: Protocol[] }> = ({ sessions, onDelete, protocols }) => (
+  <div className="space-y-6">
+    <h2 className="text-4xl font-black uppercase">ARCHIVE</h2>
+    {sessions.length === 0 ? (
+      <div className="p-12 text-center text-zinc-600 font-black uppercase tracking-widest border border-dashed border-white/5 rounded-3xl">No operational data recorded.</div>
+    ) : (
+      sessions.map(s => (
+        <div key={s.id} className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6 flex justify-between items-center group transition-all hover:border-white/10">
+          <div>
+            <p className="text-xs font-mono text-zinc-500">{new Date(s.date).toLocaleDateString()} @ {new Date(s.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+            <h3 className="text-xl font-black uppercase tracking-tighter">Week {s.week} Day {s.day}</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-1">{protocols.find(p => p.id === s.protocolId)?.name || 'Protocol'}</p>
+          </div>
+          <button onClick={() => onDelete(s.id)} className="p-4 text-zinc-800 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={24} /></button>
+        </div>
+      ))
+    )}
+  </div>
+);
+
+const ReportsView: React.FC<{ sessions: WorkoutSession[]; protocol: Protocol }> = ({ sessions, protocol }) => {
+  const weeklyData = useMemo(() => {
+    const weeks: Record<number, number> = {};
+    sessions.forEach(s => {
+      const ton = s.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sa, set) => sa + (set.completed ? set.weight * set.reps : 0), 0), 0) / 1000;
+      weeks[s.week] = (weeks[s.week] || 0) + ton;
+    });
+    return Object.entries(weeks).map(([w, t]) => ({ week: `W${w}`, tonnage: parseFloat(t.toFixed(1)) })).reverse();
+  }, [sessions]);
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <h2 className="text-4xl font-black uppercase tracking-tighter">PERFORMANCE</h2>
+      <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-8 h-[400px]">
+        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-6">Volume Progression (Tonnage/t)</h3>
+        {weeklyData.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeklyData}>
+              <XAxis dataKey="week" stroke="#333" fontSize={10} fontWeight="900" />
+              <YAxis stroke="#333" fontSize={10} fontWeight="900" />
+              <Tooltip 
+                cursor={{fill: 'rgba(255,255,255,0.02)'}}
+                contentStyle={{backgroundColor: '#000', border: '1px solid #222', borderRadius: '12px', fontSize: '10px', fontWeight: '900'}} 
+              />
+              <Bar dataKey="tonnage" fill={protocol.accentColor} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-zinc-800 uppercase font-black tracking-widest text-sm italic">Insufficient Data</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const BodyStatsView: React.FC<{ 
+  bodyWeights: BodyWeight[]; 
+  onAddWeight: (w: BodyWeight) => void;
+  onDeleteWeight: (id: string) => void;
+}> = ({ bodyWeights, onAddWeight, onDeleteWeight }) => (
+  <div className="space-y-8 animate-in fade-in duration-500">
+    <h2 className="text-4xl font-black uppercase tracking-tighter">BODY COMP</h2>
+    <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-8">
+      <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-6 italic underline decoration-zinc-800 underline-offset-4">Weight Tracking (KG)</h3>
+      <div className="flex gap-4 mb-8">
+        <div className="relative flex-1">
+          <input 
+            type="number" 
+            step="0.1" 
+            placeholder="00.0" 
+            className="bg-black border border-white/10 rounded-2xl px-6 py-4 w-full font-mono text-2xl font-black text-white" 
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                const val = parseFloat(e.currentTarget.value);
+                if (val) {
+                  onAddWeight({ id: crypto.randomUUID(), date: new Date().toISOString(), weight: val });
+                  e.currentTarget.value = '';
+                }
+              }
+            }} 
+          />
+          <span className="absolute -top-2 left-4 bg-black px-2 text-[8px] font-black text-zinc-500 uppercase tracking-widest">Entry</span>
+        </div>
+      </div>
+      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+        {bodyWeights.map(w => (
+          <div key={w.id} className="flex justify-between items-center p-5 bg-white/5 rounded-2xl border border-white/5 transition-all hover:border-white/10">
+            <div>
+              <span className="block text-[10px] font-black text-zinc-500 uppercase">{new Date(w.date).toLocaleDateString()}</span>
+              <span className="font-mono text-2xl font-black text-white">{w.weight}</span>
+              <span className="text-xs font-black text-zinc-600 ml-1">KG</span>
+            </div>
+            <button onClick={() => onDeleteWeight(w.id)} className="p-3 text-zinc-800 hover:text-red-500 transition-colors"><X size={20} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const SettingsView: React.FC<{ settings: UserSettings; onUpdate: (s: UserSettings) => void }> = ({ settings, onUpdate }) => (
+  <div className="space-y-8">
+    <h2 className="text-4xl font-black uppercase tracking-tighter">SYSTEM</h2>
+    <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-8 space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <span className="block text-sm font-black uppercase tracking-tight text-white">Auto-Backup</span>
+          <span className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-1">Saves to local storage after commit</span>
+        </div>
+        <button onClick={() => onUpdate({ ...settings, autoBackupAfterSession: !settings.autoBackupAfterSession })} className={`w-14 h-8 rounded-full p-1 transition-all ${settings.autoBackupAfterSession ? 'bg-green-500' : 'bg-zinc-800'}`}>
+           <div className={`w-6 h-6 bg-white rounded-full transition-all ${settings.autoBackupAfterSession ? 'translate-x-6' : 'translate-x-0'}`} />
+        </button>
+      </div>
+      <div className="pt-8 border-t border-white/5">
+        <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest text-center leading-relaxed">
+          TITAN 133 Performance Engine<br/>Version 1.1.2 Build 2025<br/>Optimized for extreme mechanical tension
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const NavItem: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string; accent: string }> = ({ active, onClick, icon, label, accent }) => (
+  <button onClick={onClick} className={`flex flex-col lg:flex-row items-center lg:space-x-4 px-2 lg:px-6 py-4 rounded-3xl transition-all ${active ? 'bg-white/5' : 'text-gray-500 hover:text-white'}`} style={{ color: active ? accent : undefined }}>
+    {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 3 })}
+    <span className="text-[8px] lg:text-xs font-black uppercase tracking-[0.2em] mt-2 lg:mt-0">{label}</span>
+  </button>
+);
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'reports' | 'body' | 'settings' | 'history'>('dashboard');
+  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [maxes, setMaxes] = useState<MaxStats>({ meadowsRow: 0, machinePress: 0, hackSquat: 0, rdl: 0, smithIncline: 0 });
+  const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
+  const [activeProtocolId] = useState('titan-133');
+  const [settings, setSettings] = useState<UserSettings>({ email: 'user@example.com', autoRemindExport: true, autoBackupAfterSession: true, lastExportMonth: new Date().getMonth() });
+  const [bodyWeights, setBodyWeights] = useState<BodyWeight[]>([]);
+
+  useEffect(() => {
+    const savedSessions = localStorage.getItem('titan_sessions');
+    const savedMaxes = localStorage.getItem('titan_maxes');
+    const savedWeights = localStorage.getItem('titan_bodyweights');
+    if (savedSessions) setSessions(JSON.parse(savedSessions));
+    if (savedMaxes) setMaxes(JSON.parse(savedMaxes));
+    if (savedWeights) setBodyWeights(JSON.parse(savedWeights));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('titan_sessions', JSON.stringify(sessions));
+    localStorage.setItem('titan_maxes', JSON.stringify(maxes));
+    localStorage.setItem('titan_bodyweights', JSON.stringify(bodyWeights));
+  }, [sessions, maxes, bodyWeights]);
+
+  const activeProtocol = useMemo(() => DEFAULT_PROTOCOLS.find(p => p.id === activeProtocolId) || DEFAULT_PROTOCOLS[0], [activeProtocolId]);
+
+  const handleAddSession = (session: WorkoutSession) => {
+    setSessions(prev => [session, ...prev]);
+    const newMaxes = { ...maxes };
+    session.exercises.forEach(ex => {
+      const weight = Math.max(...ex.sets.map(s => s.weight));
+      const n = ex.name.toLowerCase();
+      if (n.includes('meadows')) newMaxes.meadowsRow = Math.max(newMaxes.meadowsRow, weight);
+      if (n.includes('machine chest press')) newMaxes.machinePress = Math.max(newMaxes.machinePress, weight);
+      if (n.includes('hack squat')) newMaxes.hackSquat = Math.max(newMaxes.hackSquat, weight);
+      if (n.includes('rdl')) newMaxes.rdl = Math.max(newMaxes.rdl, weight);
+      if (n.includes('smith incline')) newMaxes.smithIncline = Math.max(newMaxes.smithIncline, weight);
+    });
+    setMaxes(newMaxes);
+    setActiveTab('dashboard');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-gray-200 pb-24 lg:pb-0 lg:pl-72 flex flex-col">
+      {timerSeconds !== null && <RestTimer seconds={timerSeconds} color={activeProtocol.accentColor} onComplete={() => setTimerSeconds(null)} onCancel={() => setTimerSeconds(null)} />}
+      
+      <nav className="fixed bottom-0 left-0 w-full bg-[#0a0a0a] border-t border-white/5 flex justify-around p-2 z-50 lg:top-0 lg:left-0 lg:h-full lg:w-72 lg:flex-col lg:justify-start lg:border-r lg:border-t-0 lg:p-8 shadow-2xl select-none">
+        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'log'} onClick={() => setActiveTab('log')} icon={<Plus />} label="LOG" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 />} label="REPORTS" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'body'} onClick={() => setActiveTab('body')} icon={<User />} label="BODY" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History />} label="ARCHIVE" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings2 />} label="SYSTEM" accent={activeProtocol.accentColor} />
+      </nav>
+
+      <main className="max-w-6xl w-full mx-auto p-4 lg:p-12">
+        {activeTab === 'dashboard' && <Dashboard sessions={sessions} maxes={maxes} protocol={activeProtocol} />}
+        {activeTab === 'log' && (
+          <WorkoutLogger 
+            protocol={activeProtocol} 
+            onSave={handleAddSession} 
+            currentWeek={sessions[0]?.week || 1} 
+            recommendedDay={(sessions[0]?.day % activeProtocol.days.length) + 1 || 1} 
+            onStartRest={setTimerSeconds} 
+          />
+        )}
+        {activeTab === 'history' && <HistoryView sessions={sessions} onDelete={(id) => setSessions(prev => prev.filter(s => s.id !== id))} protocols={DEFAULT_PROTOCOLS} />}
+        {activeTab === 'reports' && <ReportsView sessions={sessions} protocol={activeProtocol} />}
+        {activeTab === 'body' && (
+          <BodyStatsView 
+            bodyWeights={bodyWeights} 
+            onAddWeight={(w) => setBodyWeights(prev => [w, ...prev])} 
+            onDeleteWeight={(id) => setBodyWeights(prev => prev.filter(w => w.id !== id))} 
+          />
+        )}
+        {activeTab === 'settings' && <SettingsView settings={settings} onUpdate={setSettings} />}
+      </main>
+    </div>
+  );
+};
+
+export default App;

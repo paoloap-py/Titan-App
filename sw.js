@@ -1,4 +1,4 @@
-const CACHE_NAME = 'titan-v4';
+const CACHE_NAME = 'titan-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -16,7 +16,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first strategy to ensure the fixed code is loaded
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
