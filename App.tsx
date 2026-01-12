@@ -37,7 +37,6 @@ import {
   Target,
   ArrowUpRight,
   Circle,
-  Footprints,
   ChevronDown,
   ChevronUp,
   Save,
@@ -381,12 +380,6 @@ const Dashboard: React.FC<{
     }, 0) / 1000;
   }, [sessions]);
 
-  const weeklyCardioCount = useMemo(() => {
-    const latestWeek = sessions[0]?.week || 0;
-    const currentWeekData = sessions.filter(s => s.week === latestWeek && s.protocolId === protocol.id);
-    return currentWeekData.filter(s => s.cardioCompleted).length;
-  }, [sessions, protocol.id]);
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -407,11 +400,8 @@ const Dashboard: React.FC<{
         ))}</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="SESSIONS" value={`${sessions.length}`} accent={protocol.accentColor} />
-        <StatCard label="CARDIO" value={`${weeklyCardioCount}/5`} accent="#f97316" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label="TOTAL TONNAGE" value={`${totalTonnage.toFixed(1)}t`} accent={protocol.accentColor} />
-        <StatCard label="MAX MEADOWS" value={`${maxes.meadowsRow}kg`} accent={protocol.accentColor} />
         <StatCard label="PROTOCOL" value={protocol.name} accent={protocol.accentColor} />
       </div>
 
@@ -635,7 +625,6 @@ const WorkoutLogger: React.FC<{
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
   const [warmupStatus, setWarmupStatus] = useState<boolean[]>([]);
   const [stretchingStatus, setStretchingStatus] = useState<boolean[]>([]);
-  const [cardioCompleted, setCardioCompleted] = useState(false);
   const initialLoadRef = useRef(false);
   const [selectedExerciseModal, setSelectedExerciseModal] = useState<string | null>(null);
 
@@ -648,11 +637,6 @@ const WorkoutLogger: React.FC<{
     const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
-
-  const weeklyCardioCount = useMemo(() => {
-    const completedThisWeek = sessions.filter(s => s.week === week && s.protocolId === protocol.id && s.cardioCompleted).length;
-    return completedThisWeek + (cardioCompleted ? 1 : 0);
-  }, [sessions, week, protocol.id, cardioCompleted]);
 
   const cleanName = (name: string) => name.split(':')[0].replace(/[🎗️🛑⚓✋⏱️🏳️⏳🤚🔻🛒]/g, '').trim();
 
@@ -673,7 +657,6 @@ const WorkoutLogger: React.FC<{
     setDay(templateDay);
     setWarmupStatus(new Array(template.warmup.length).fill(false));
     setStretchingStatus(new Array(template.stretching.length).fill(false));
-    setCardioCompleted(false);
     
     const newExs: ExerciseEntry[] = template.exercises.map(rawName => {
       const patternMatch = rawName.match(/(\d+)\s*x\s*([0-9\–\-FailureMax\sHold]+)/i);
@@ -978,25 +961,7 @@ const WorkoutLogger: React.FC<{
         </div>
       )}
 
-      {/* CARDIO SECTION (MANDATORY) */}
-      <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Footprints size={14} className="text-orange-500" /> CARDIO</h3>
-          <span className="text-[10px] font-mono text-zinc-600 uppercase">{weeklyCardioCount}/5 Completed this week</span>
-        </div>
-        <div className="text-[10px] font-mono text-zinc-600 uppercase mb-2">5 mins | 7.0 km/h | Incline 3</div>
-        <button 
-          onClick={() => setCardioCompleted(!cardioCompleted)} 
-          className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left w-full ${cardioCompleted ? 'bg-zinc-900 border-green-500/20 text-green-500' : 'bg-black border-white/5 text-zinc-400 hover:border-white/10'}`}
-        >
-          <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${cardioCompleted ? 'bg-green-500 border-green-500 text-black' : 'border-white/10 text-transparent'}`}>
-            <Check size={14} strokeWidth={4} />
-          </div>
-          <span className="text-[11px] font-black uppercase tracking-tight">{cardioCompleted ? 'CARDIO DONE' : 'MARK CARDIO AS COMPLETED'}</span>
-        </button>
-      </div>
-
-      <button onClick={() => { if(exercises.length > 0) { setSessionEndTime(Date.now()); onSave({ id: crypto.randomUUID(), date: new Date().toISOString(), week, day, exercises, protocolId: protocol.id, warmupCompleted: warmupStatus, stretchingCompleted: stretchingStatus, cardioCompleted: cardioCompleted }); } }} className="w-full py-8 text-white rounded-[2.5rem] font-black text-2xl tracking-tighter uppercase shadow-2xl hover:brightness-110 transition-all flex items-center justify-center gap-4" style={{ backgroundColor: protocol.accentColor }}>
+      <button onClick={() => { if(exercises.length > 0) { setSessionEndTime(Date.now()); onSave({ id: crypto.randomUUID(), date: new Date().toISOString(), week, day, exercises, protocolId: protocol.id, warmupCompleted: warmupStatus, stretchingCompleted: stretchingStatus }); } }} className="w-full py-8 text-white rounded-[2.5rem] font-black text-2xl tracking-tighter uppercase shadow-2xl hover:brightness-110 transition-all flex items-center justify-center gap-4" style={{ backgroundColor: protocol.accentColor }}>
         <Flame className="fill-white" /> COMMIT SESSION
       </button>
 
@@ -1028,7 +993,7 @@ const WorkoutLogger: React.FC<{
 
 const HistoryView: React.FC<{ sessions: WorkoutSession[]; onDelete: (id: string) => void; protocols: Protocol[] }> = ({ sessions, onDelete, protocols }) => {
   const handleExportCSV = () => {
-    const headers = ['Date', 'Week', 'Day', 'Protocol', 'Tonnage (t)', 'Exercises', 'Cardio'];
+    const headers = ['Date', 'Week', 'Day', 'Protocol', 'Tonnage (t)', 'Exercises'];
     const rows = sessions.map(s => {
       const tonnage = s.exercises.reduce((totalEx, ex) => totalEx + ex.sets.reduce((totalSet, set) => totalSet + (set.completed ? (set.weight * set.reps) : 0), 0), 0) / 1000;
       const protocolName = protocols.find(p => p.id === s.protocolId)?.name || 'Unknown';
@@ -1038,8 +1003,7 @@ const HistoryView: React.FC<{ sessions: WorkoutSession[]; onDelete: (id: string)
         s.day,
         protocolName,
         tonnage.toFixed(1),
-        s.exercises.length,
-        s.cardioCompleted ? 'Yes' : 'No'
+        s.exercises.length
       ];
     });
 
@@ -1092,12 +1056,6 @@ const HistoryView: React.FC<{ sessions: WorkoutSession[]; onDelete: (id: string)
                 <div>
                   <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">PR STATUS</p>
                   <p className={`text-xl font-black ${prHit ? 'text-yellow-500' : 'text-gray-700'}`}>{prHit ? 'ACHIEVED' : 'STABLE'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">CARDIO</p>
-                  <p className={`text-xl font-black ${s.cardioCompleted ? 'text-green-500' : 'text-red-500/30'}`}>
-                    🏃 {s.cardioCompleted ? '✓' : '✗'}
-                  </p>
                 </div>
               </div>
             </div>
