@@ -686,7 +686,7 @@ const App: React.FC = () => {
       {timerSeconds !== null && <RestTimer seconds={timerSeconds} color={activeProtocol.accentColor} onComplete={() => setTimerSeconds(null)} onCancel={() => setTimerSeconds(null)} />}
       
       <nav className="fixed bottom-0 left-0 w-full bg-[#0a0a0a] border-t border-white/5 flex justify-around p-2 z-50 lg:top-0 lg:left-0 lg:h-full lg:w-72 lg:flex-col lg:justify-start lg:border-r lg:border-t-0 lg:p-8 shadow-2xl select-none">
-        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard'} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'log'} onClick={() => setActiveTab('log')} icon={<Plus />} label="LOG" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 />} label="REPORTS" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'body'} onClick={() => setActiveTab('body')} icon={<User />} label="BODY" accent={activeProtocol.accentColor} />
