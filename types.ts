@@ -96,7 +96,7 @@ export interface BodyMeasurement {
 
 export interface Alert {
   id: string;
-  type: 'deload' | 'plateau' | 'pr' | 'milestone';
+  type: 'deload' | 'plateau' | 'pr' | 'milestone' | 'volume-imbalance';
   severity: 'info' | 'warning' | 'danger' | 'success';
   title: string;
   message: string;
