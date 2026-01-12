@@ -383,7 +383,7 @@ const Dashboard: React.FC<{
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div><h1 className="text-5xl font-black tracking-tighter uppercase text-white leading-none">COMMAND</h1><p className="font-mono mt-2 tracking-[0.3em] text-xs font-bold uppercase text-zinc-500">Operational Dashboard</p></div>
+        <div><h1 className="text-5xl font-black tracking-tighter uppercase text-white leading-none">HOME</h1><p className="font-mono mt-2 tracking-[0.3em] text-xs font-bold uppercase text-zinc-500">Operational Dashboard</p></div>
         <div className="flex bg-[#0e0e0e] p-1 rounded-2xl border border-white/5 w-full md:w-auto overflow-x-auto">
           {protocols.map(p => (
             <button key={p.id} onClick={() => onProtocolChange(p.id)} className={`whitespace-nowrap flex-1 md:flex-none px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${protocol.id === p.id ? 'bg-white text-black' : 'text-gray-500 hover:text-white'}`}>{p.name}</button>
@@ -584,7 +584,7 @@ const App: React.FC = () => {
       {timerSeconds !== null && <RestTimer seconds={timerSeconds} color={activeProtocol.accentColor} onComplete={() => setTimerSeconds(null)} onCancel={() => setTimerSeconds(null)} />}
       {prToast && <PRToast exercise={prToast.exercise} new1RM={prToast.new1RM} improvement={prToast.improvement} onDismiss={() => setPrToast(null)} />}
       <nav className="fixed bottom-0 left-0 w-full bg-[#0a0a0a] border-t border-white/5 flex justify-around p-2 z-50 lg:top-0 lg:left-0 lg:h-full lg:w-64 lg:flex-col lg:justify-start lg:border-r lg:border-t-0 lg:p-6 shadow-2xl select-none">
-        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard />} label="HOME" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'log'} onClick={() => setActiveTab('log')} icon={<Plus />} label="LOG" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 />} label="REPORTS" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'body'} onClick={() => setActiveTab('body')} icon={<User />} label="BODY" accent={activeProtocol.accentColor} />

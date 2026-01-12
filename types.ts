@@ -1,39 +1,56 @@
+
+export interface ExercisePR {
+  date: string;
+  weight: number;
+  reps: number;
+  estimated1RM: number;
+}
+
 export interface ExerciseSet {
   reps: number;
   weight: number;
-  completed: boolean;
-  usedStraps?: boolean;
-  isFinisher?: boolean;
-  isAnchor?: boolean;
+  completed?: boolean;
   isDropSet?: boolean;
   isRestPause?: boolean;
+  isFinisher?: boolean; 
+  isAnchor?: boolean; 
+  usedStraps?: boolean;
 }
 
 export interface ExerciseEntry {
   id: string;
   name: string;
-  targetRepRange: string;
   sets: ExerciseSet[];
-  hasLongRest?: boolean;
-  requiresStraps?: boolean;
-  hasFinisherTarget?: boolean;
-  hasAnchorTarget?: boolean;
-  requiresDropSet?: boolean;
-  requiresRestPause?: boolean;
-  hasPRHit?: boolean;
+  notes?: string;
+  targetRepRange: string;
+  hasLongRest?: boolean; 
+  requiresStraps?: boolean; 
+  hasFinisherTarget?: boolean; 
+  hasAnchorTarget?: boolean; 
+  requiresDropSet?: boolean; 
+  requiresRestPause?: boolean; 
+  hasPRHit?: boolean; 
 }
 
 export interface WorkoutSession {
   id: string;
   date: string;
   week: number;
-  day: number;
+  day: number; 
   exercises: ExerciseEntry[];
+  isDeload?: boolean;
   protocolId: string;
-  warmupCompleted: boolean[];
-  stretchingCompleted: boolean[];
-  cardioCompleted?: boolean;
-  hasPR?: boolean;
+  hasPR?: boolean; 
+  warmupCompleted?: boolean[];
+  stretchingCompleted?: boolean[];
+  cardioCompleted: boolean;
+}
+
+export interface UserSettings {
+  email: string;
+  autoRemindExport: boolean;
+  autoBackupAfterSession: boolean;
+  lastExportMonth: number; 
 }
 
 export interface MaxStats {
@@ -47,10 +64,10 @@ export interface MaxStats {
 export interface ProtocolDay {
   day: number;
   name: string;
-  targetDuration: number;
+  exercises: string[];
   warmup: string[];
   stretching: string[];
-  exercises: string[];
+  targetDuration: number;
 }
 
 export interface Protocol {
@@ -63,43 +80,36 @@ export interface Protocol {
   days: ProtocolDay[];
 }
 
-export interface UserSettings {
-  email: string;
-  autoRemindExport: boolean;
-  autoBackupAfterSession: boolean;
-  lastExportMonth: number;
+export interface Alert {
+  id: string;
+  type: 'deload' | 'plateau' | 'volume-imbalance';
+  severity: 'warning' | 'danger';
+  title: string;
+  message: string;
+  exercise?: string;
+  muscleGroup?: string;
+  createdAt: string;
 }
 
-export interface ExercisePR {
-  date: string;
-  weight: number;
-  reps: number;
-  estimated1RM: number;
-}
-
+/**
+ * Interface representing a body weight entry.
+ */
 export interface BodyWeight {
   id: string;
   date: string;
   weight: number;
 }
 
+/**
+ * Interface representing body measurement data.
+ */
 export interface BodyMeasurement {
   id: string;
   date: string;
-  armLeft?: number;
-  armRight?: number;
-  chest?: number;
-  waist?: number;
-  quadLeft?: number;
-  quadRight?: number;
-}
-
-export interface Alert {
-  id: string;
-  type: 'deload' | 'plateau' | 'pr' | 'milestone';
-  severity: 'info' | 'warning' | 'danger' | 'success';
-  title: string;
-  message: string;
-  exercise?: string;
-  createdAt: string;
+  armLeft: number;
+  armRight: number;
+  chest: number;
+  waist: number;
+  quadLeft: number;
+  quadRight: number;
 }
