@@ -1,54 +1,61 @@
-const CACHE_NAME = 'titan-v2';
-const ASSETS = [
-  './',
-  './index.html',
-  './index.tsx',
-  './App.tsx',
-  './types.ts',
-  './muscleMapping.ts',
-  './manifest.json',
+const CACHE_NAME = 'titan-v3';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap'
 ];
 
-// Install: Cache core assets
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
-// Activate: Clean up old versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch: Try network first, then cache
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Cache external dependencies as they are requested
-        const resClone = response.clone();
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, resClone);
+          // Only cache same-origin assets or specific CDN fonts/scripts
+          if (event.request.url.startsWith(self.location.origin) || 
+              event.request.url.includes('fonts.googleapis.com') ||
+              event.request.url.includes('cdn.tailwindcss.com')) {
+            cache.put(event.request, responseToCache);
+          }
         });
+
         return response;
-      })
-      .catch(() => {
-        return caches.match(event.request).then((res) => res || caches.match('./'));
-      })
+      }).catch(() => {
+        // Fallback to index.html for SPA routing if offline
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      });
+    })
   );
 });
