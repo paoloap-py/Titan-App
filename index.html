@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TITAN 133">
     <meta name="theme-color" content="#050505">
+    
     <title>TITAN 133</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2554/2554032.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -17,11 +22,16 @@
             background-color: #050505;
             color: #e5e5e5;
             -webkit-tap-highlight-color: transparent;
-            /* Prevent rubber-banding on iOS */
-            overflow-x: hidden;
+            /* Prevent rubber-banding on iOS and handle safe areas for notch */
+            overflow: hidden;
             position: fixed;
             width: 100%;
             height: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            
+            /* Prevent accidental selection during gym sessions */
+            user-select: none;
+            -webkit-user-select: none;
         }
         #root {
             height: 100%;
@@ -43,6 +53,12 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #444;
+        }
+        
+        /* Allow input selection in log inputs */
+        input, textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
         }
     </style>
 <script type="importmap">
