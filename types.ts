@@ -1,3 +1,4 @@
+
 export interface ExercisePR {
   date: string;
   weight: number;
@@ -28,7 +29,7 @@ export interface ExerciseEntry {
   hasAnchorTarget?: boolean; 
   requiresDropSet?: boolean; 
   requiresRestPause?: boolean; 
-  hasPRHit?: boolean; // Tracking if a PR was hit for this exercise in current session
+  hasPRHit?: boolean; 
 }
 
 export interface WorkoutSession {
@@ -39,7 +40,7 @@ export interface WorkoutSession {
   exercises: ExerciseEntry[];
   isDeload?: boolean;
   protocolId: string;
-  hasPR?: boolean; // Flag to indicate if session contains any PRs
+  hasPR?: boolean; 
   warmupCompleted?: boolean[];
   stretchingCompleted?: boolean[];
   cardioCompleted: boolean;
@@ -49,7 +50,7 @@ export interface UserSettings {
   email: string;
   autoRemindExport: boolean;
   autoBackupAfterSession: boolean;
-  lastExportMonth: number; // 0-11
+  lastExportMonth: number; 
 }
 
 export interface MaxStats {
@@ -79,23 +80,6 @@ export interface Protocol {
   days: ProtocolDay[];
 }
 
-export interface BodyWeight {
-  id: string;
-  date: string; // ISO date string
-  weight: number; // kg
-}
-
-export interface BodyMeasurement {
-  id: string;
-  date: string; // ISO date string
-  armLeft?: number; // cm
-  armRight?: number;
-  chest?: number;
-  waist?: number;
-  quadLeft?: number;
-  quadRight?: number;
-}
-
 export interface Alert {
   id: string;
   type: 'deload' | 'plateau' | 'volume-imbalance';
@@ -105,4 +89,27 @@ export interface Alert {
   exercise?: string;
   muscleGroup?: string;
   createdAt: string;
+}
+
+/**
+ * Interface representing a body weight entry.
+ */
+export interface BodyWeight {
+  id: string;
+  date: string;
+  weight: number;
+}
+
+/**
+ * Interface representing body measurement data.
+ */
+export interface BodyMeasurement {
+  id: string;
+  date: string;
+  armLeft: number;
+  armRight: number;
+  chest: number;
+  waist: number;
+  quadLeft: number;
+  quadRight: number;
 }

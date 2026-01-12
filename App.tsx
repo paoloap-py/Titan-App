@@ -36,19 +36,19 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  RadarChart, 
-  Radar, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  XAxis, 
-  YAxis, 
-  Legend, 
-  ReferenceLine, 
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  XAxis,
+  YAxis,
+  Legend,
+  ReferenceLine,
   Cell
 } from 'recharts';
 import { 
@@ -269,18 +269,18 @@ const generateAlerts = (sessions: WorkoutSession[], protocol: Protocol): Alert[]
     sessions.filter(s => s.week === latestSession.week).forEach(s => {
       s.exercises.forEach(ex => {
         const muscles = getBodyHighlighterMuscles(ex.name);
-        const setWeight = ex.sets.length;
+        const setCount = ex.sets.length;
         muscles.forEach(m => {
-          if (['chest'].includes(m)) currentWeekVol.chest += setWeight;
-          else if (['upper-back', 'trapezius', 'lower-back'].includes(m)) currentWeekVol.back += setWeight;
-          else if (['front-deltoids', 'back-deltoids'].includes(m)) currentWeekVol.shoulders += setWeight;
-          else if (['biceps'].includes(m)) currentWeekVol.biceps += setWeight;
-          else if (['triceps'].includes(m)) currentWeekVol.triceps += setWeight;
-          else if (['quadriceps'].includes(m)) currentWeekVol.quads += setWeight;
-          else if (['hamstring'].includes(m)) currentWeekVol.hamstrings += setWeight;
-          else if (['gluteal', 'abductors', 'adductor'].includes(m)) currentWeekVol.glutes += setWeight;
-          else if (['calves'].includes(m)) currentWeekVol.calves += setWeight;
-          else if (['abs', 'obliques'].includes(m)) currentWeekVol.core += setWeight;
+          if (['chest'].includes(m)) currentWeekVol.chest += setCount;
+          else if (['upper-back', 'trapezius', 'lower-back'].includes(m)) currentWeekVol.back += setCount;
+          else if (['front-deltoids', 'back-deltoids'].includes(m)) currentWeekVol.shoulders += setCount;
+          else if (['biceps'].includes(m)) currentWeekVol.biceps += setCount;
+          else if (['triceps'].includes(m)) currentWeekVol.triceps += setCount;
+          else if (['quadriceps'].includes(m)) currentWeekVol.quads += setCount;
+          else if (['hamstring'].includes(m)) currentWeekVol.hamstrings += setCount;
+          else if (['gluteal', 'abductors', 'adductor'].includes(m)) currentWeekVol.glutes += setCount;
+          else if (['calves'].includes(m)) currentWeekVol.calves += setCount;
+          else if (['abs', 'obliques'].includes(m)) currentWeekVol.core += setCount;
         });
       });
     });
@@ -317,13 +317,6 @@ const getWeightChangeBody = (weights: BodyWeight[]) => {
   return change.toFixed(1);
 };
 
-const hexToRgba = (hex: string, alpha: number) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
 const StatCard: React.FC<{ mini?: boolean; label: string; value: string; accent: string; subValue?: string; subColor?: string }> = ({ mini, label, value, accent, subValue, subColor }) => (
   <div className={`bg-[#0e0e0e] border border-white/5 p-6 rounded-3xl ${mini ? '' : 'flex-1'}`}>
     <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">{label}</p>
@@ -357,25 +350,14 @@ const Dashboard: React.FC<{
   }, [sessions]);
 
   const weeklyMuscles = useMemo(() => {
-    const muscleSetCounts: Record<string, number> = {};
+    const muscles = new Set<string>();
     currentWeekSessions.forEach(s => {
       s.exercises.forEach(ex => {
-        getBodyHighlighterMuscles(ex.name).forEach(m => {
-          muscleSetCounts[m] = (muscleSetCounts[m] || 0) + ex.sets.length;
-        });
+        getBodyHighlighterMuscles(ex.name).forEach(m => muscles.add(m));
       });
     });
-
-    const maxSets = Math.max(...Object.values(muscleSetCounts), 1);
-    return Object.entries(muscleSetCounts).map(([m, count]) => {
-      const density = Math.max(0.3, count / maxSets);
-      return { 
-        name: m, 
-        muscles: [m],
-        color: hexToRgba(protocol.accentColor, density)
-      };
-    });
-  }, [currentWeekSessions, protocol.accentColor]);
+    return Array.from(muscles).map(m => ({ name: m, muscles: [m] }));
+  }, [currentWeekSessions]);
 
   const totalTonnage = useMemo(() => {
     return sessions.reduce((acc, s) => {
@@ -394,6 +376,11 @@ const Dashboard: React.FC<{
     return currentWeekData.filter(s => s.cardioCompleted).length;
   }, [sessions, protocol.id]);
 
+  const weeklySessionCount = useMemo(() => {
+    const latestWeek = sessions[0]?.week || 0;
+    return sessions.filter(s => s.week === latestWeek && s.protocolId === protocol.id).length;
+  }, [sessions, protocol.id]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -407,7 +394,7 @@ const Dashboard: React.FC<{
 
       {alerts.length > 0 && (
         <div className="space-y-3">{alerts.map(alert => (
-          <div key={alert.id} className={`flex items-start gap-4 p-6 rounded-3xl border transition-all ${alert.severity === 'danger' ? 'bg-red-500/10 border-red-500/20' : 'bg-yellow-500/10 border-red-500/20'}`}><AlertTriangle className={alert.severity === 'danger' ? 'text-red-500' : 'text-yellow-500'} size={24} />
+          <div key={alert.id} className={`flex items-start gap-4 p-6 rounded-3xl border transition-all ${alert.severity === 'danger' ? 'bg-red-500/10 border-red-500/20' : 'bg-yellow-500/10 border-yellow-500/20'}`}><AlertTriangle className={alert.severity === 'danger' ? 'text-red-500' : 'text-yellow-500'} size={24} />
             <div className="flex-1"><h4 className="font-black uppercase text-sm tracking-tight text-white">{alert.title}</h4><p className="text-xs text-gray-400 mt-1">{alert.message}</p></div>
             <button onClick={() => onDismissAlert(alert.id)} className="text-gray-500 hover:text-white"><X size={20} /></button>
           </div>
@@ -415,7 +402,7 @@ const Dashboard: React.FC<{
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="SESSIONS" value={`${sessions.length}`} accent={protocol.accentColor} />
+        <StatCard label="SESSIONS" value={`${weeklySessionCount}/5`} accent={protocol.accentColor} />
         <StatCard label="CARDIO" value={`${weeklyCardioCount}/5`} accent="#f97316" />
         <StatCard label="TOTAL TONNAGE" value={`${totalTonnage.toFixed(1)}t`} accent={protocol.accentColor} />
         <StatCard label="MAX MEADOWS" value={`${maxes.meadowsRow}kg`} accent={protocol.accentColor} />
@@ -436,11 +423,11 @@ const Dashboard: React.FC<{
           <div className="flex justify-center gap-12 py-6 bg-black/40 rounded-[40px] border border-white/5">
               <div className="flex flex-col items-center">
                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Anterior</span>
-                <Model type="anterior" data={weeklyMuscles as any} style={{ width: '220px' }} />
+                <Model type="anterior" data={weeklyMuscles as any} highlightedColors={[protocol.accentColor]} style={{ width: '220px' }} />
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Posterior</span>
-                <Model type="posterior" data={weeklyMuscles as any} style={{ width: '220px' }} />
+                <Model type="posterior" data={weeklyMuscles as any} highlightedColors={[protocol.accentColor]} style={{ width: '220px' }} />
               </div>
           </div>
         </div>
@@ -452,23 +439,92 @@ const Dashboard: React.FC<{
 const RestTimer: React.FC<{ seconds: number; color: string; onComplete: () => void; onCancel: () => void }> = ({ seconds, color, onComplete, onCancel }) => {
   const [timeLeft, setTimeLeft] = useState(seconds);
   const initialSeconds = useRef(seconds);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const beepRef = useRef<HTMLAudioElement | null>(null);
+
+  // Preload audio on mount
   useEffect(() => {
-    if (timeLeft <= 0) { onComplete(); return; }
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audioRef.current.volume = 0.8;
+    beepRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+    beepRef.current.volume = 0.4;
+    audioRef.current.load();
+    beepRef.current.load();
+  }, []);
+
+  const triggerVibration = (pattern: number | number[]) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  const playCompletionAlert = () => {
+    triggerVibration([200, 100, 200, 100, 400]);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
+  const playCountdownBeep = () => {
+    triggerVibration(100);
+    if (beepRef.current) {
+      beepRef.current.currentTime = 0;
+      beepRef.current.play().catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      playCompletionAlert();
+      onComplete();
+      return;
+    }
+    if (timeLeft <= 3) {
+      playCountdownBeep();
+    }
     const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, onComplete]);
+
   const progress = (timeLeft / initialSeconds.current) * 100;
+  
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className="bg-[#0e0e0e] border border-white/10 rounded-3xl p-10 max-w-xs w-full text-center space-y-8 shadow-2xl animate-in zoom-in duration-300">
         <div className="relative w-48 h-48 mx-auto flex items-center justify-center">
           <svg className="absolute inset-0 w-full h-full -rotate-90">
             <circle cx="96" cy="96" r="88" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-            <circle cx="96" cy="96" r="88" fill="transparent" stroke={color} strokeWidth="8" strokeDasharray={552.92} strokeDashoffset={552.92 * (1 - progress / 100)} strokeLinecap="round" className="transition-all duration-1000 linear" />
+            <circle 
+              cx="96" 
+              cy="96" 
+              r="88" 
+              fill="transparent" 
+              stroke={timeLeft <= 3 ? '#ef4444' : color} 
+              strokeWidth="8" 
+              strokeDasharray={552.92} 
+              strokeDashoffset={552.92 * (1 - progress / 100)} 
+              strokeLinecap="round" 
+              className="transition-all duration-1000 linear" 
+            />
           </svg>
-          <div className="text-5xl font-black tracking-tighter text-white font-mono">{formatDuration(timeLeft * 1000)}</div>
+          <div className={`text-5xl font-black tracking-tighter font-mono transition-colors ${timeLeft <= 3 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+            {formatDuration(timeLeft * 1000)}
+          </div>
         </div>
-        <button onClick={onCancel} className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:text-white transition-all">ABORT</button>
+        <div className="flex justify-center gap-4">
+          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">🔊 Sound</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">📳 Vibrate</span>
+        </div>
+        <button 
+          onClick={() => {
+            triggerVibration(50);
+            onCancel();
+          }} 
+          className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:text-white transition-all"
+        >
+          ABORT
+        </button>
       </div>
     </div>
   );
@@ -498,7 +554,6 @@ const App: React.FC = () => {
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [prToast, setPrToast] = useState<{ exercise: string; new1RM: number; improvement: number } | null>(null);
-  const [hitPrsThisSession, setHitPrsThisSession] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const savedSessions = localStorage.getItem('titan_sessions');
@@ -565,34 +620,18 @@ const App: React.FC = () => {
   };
 
   const handleAddSession = (session: WorkoutSession) => {
-    // Add PR hit status to exercises and session
-    const enrichedSession = {
-      ...session,
-      hasPR: hitPrsThisSession.size > 0,
-      exercises: session.exercises.map(ex => ({
-        ...ex,
-        hasPRHit: hitPrsThisSession.has(ex.name)
-      }))
-    };
-
-    setSessions(prev => [enrichedSession, ...prev]);
-    
-    // Clear session PR tracking
-    setHitPrsThisSession(new Set());
-
-    // Update Dashboard Maxes more robustly from PR history
+    setSessions(prev => [session, ...prev]);
     const newMaxes = { ...maxes };
-    Object.entries(prs).forEach(([name, history]) => {
-      const bestW = history.length > 0 ? Math.max(...history.map(h => h.weight)) : 0;
-      const n = name.toLowerCase();
-      if (n.includes('meadows')) newMaxes.meadowsRow = Math.max(newMaxes.meadowsRow, bestW);
-      if (n.includes('machine press')) newMaxes.machinePress = Math.max(newMaxes.machinePress, bestW);
-      if (n.includes('hack squat')) newMaxes.hackSquat = Math.max(newMaxes.hackSquat, bestW);
-      if (n.includes('rdl')) newMaxes.rdl = Math.max(newMaxes.rdl, bestW);
-      if (n.includes('smith incline')) newMaxes.smithIncline = Math.max(newMaxes.smithIncline, bestW);
+    session.exercises.forEach(ex => {
+      const weight = Math.max(...ex.sets.map(s => s.weight));
+      const n = ex.name.toLowerCase();
+      if (n.includes('meadows')) newMaxes.meadowsRow = Math.max(newMaxes.meadowsRow, weight);
+      if (n.includes('machine press')) newMaxes.machinePress = Math.max(newMaxes.machinePress, weight);
+      if (n.includes('hack squat')) newMaxes.hackSquat = Math.max(newMaxes.hackSquat, weight);
+      if (n.includes('rdl')) newMaxes.rdl = Math.max(newMaxes.rdl, weight);
+      if (n.includes('smith incline')) newMaxes.smithIncline = Math.max(newMaxes.smithIncline, weight);
     });
     setMaxes(newMaxes);
-
     setActiveTab('dashboard');
     if (settings.autoBackupAfterSession) {
       setTimeout(autoBackup, 500);
@@ -608,7 +647,6 @@ const App: React.FC = () => {
       const improvement = best1RM === 0 ? current1RM : current1RM - best1RM;
       setPrs(prev => ({ ...prev, [key]: [...(prev[key] || []), { date: new Date().toISOString(), weight, reps, estimated1RM: current1RM }] }));
       setPrToast({ exercise, new1RM: current1RM, improvement });
-      setHitPrsThisSession(prev => new Set(prev).add(exercise.toUpperCase()));
       return true;
     }
     return false;
@@ -619,7 +657,7 @@ const App: React.FC = () => {
       {timerSeconds !== null && <RestTimer seconds={timerSeconds} color={activeProtocol.accentColor} onComplete={() => setTimerSeconds(null)} onCancel={() => setTimerSeconds(null)} />}
       {prToast && <PRToast exercise={prToast.exercise} new1RM={prToast.new1RM} improvement={prToast.improvement} onDismiss={() => setPrToast(null)} />}
       <nav className="fixed bottom-0 left-0 w-full bg-[#0a0a0a] border-t border-white/5 flex justify-around p-2 z-50 lg:top-0 lg:left-0 lg:h-full lg:w-64 lg:flex-col lg:justify-start lg:border-r lg:border-t-0 lg:p-6 shadow-2xl select-none">
-        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard'} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
+        <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard />} label="COMMAND" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'log'} onClick={() => setActiveTab('log')} icon={<Plus />} label="LOG" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 />} label="REPORTS" accent={activeProtocol.accentColor} />
         <NavItem active={activeTab === 'body'} onClick={() => setActiveTab('body')} icon={<User />} label="BODY" accent={activeProtocol.accentColor} />
@@ -835,6 +873,12 @@ const WorkoutLogger: React.FC<{
     setStretchingStatus(newStatus);
   };
 
+  const completeAllStretching = () => {
+    if (currentProtocolDay) {
+      setStretchingStatus(new Array(currentProtocolDay.stretching.length).fill(true));
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-32">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -854,7 +898,7 @@ const WorkoutLogger: React.FC<{
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-white/5 pb-8">
         <div><h2 className="text-5xl font-black tracking-tighter uppercase leading-none">LOG ENGINE</h2><p className="text-gray-600 font-mono text-[9px] uppercase tracking-widest mt-3">METHODOLOGY: {protocol.name}</p></div>
-        <div className="bg-[#0e0e0e] border border-white/5 p-2 rounded-xl flex items-center gap-3"><span className="text-[9px] font-black text-gray-600 uppercase pl-2 tracking-widest">WEEK</span><input type="number" value={week} onChange={e => setWeek(parseInt(e.target.value))} className="w-10 bg-transparent text-center font-black outline-none" style={{ color: protocol.accentColor }} /></div>
+        <div className="bg-[#0e0e0e] border border-white/5 p-2 rounded-xl flex items-center gap-3"><span className="text-[9px] font-black text-zinc-600 uppercase pl-2 tracking-widest">WEEK</span><input type="number" value={week} onChange={e => setWeek(parseInt(e.target.value))} className="w-10 bg-transparent text-center font-black outline-none" style={{ color: protocol.accentColor }} /></div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">{protocol.days.map(t => (
@@ -988,7 +1032,15 @@ const WorkoutLogger: React.FC<{
         <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6 space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Accessibility size={14} className="text-blue-500" /> POST-WORKOUT STRETCHING</h3>
-            <span className="text-[10px] font-mono text-zinc-600 uppercase">Est. 5 Mins</span>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={completeAllStretching}
+                className="text-[9px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
+              >
+                COMPLETE ALL
+              </button>
+              <span className="text-[10px] font-mono text-zinc-600 uppercase">Est. 5 Mins</span>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-3">
             {currentProtocolDay.stretching.map((item, idx) => (
@@ -1100,14 +1152,7 @@ const HistoryView: React.FC<{ sessions: WorkoutSession[]; onDelete: (id: string)
                     <span className="text-[10px] font-black uppercase text-gray-500 bg-white/5 px-3 py-1 rounded-lg">Week {s.week} Day {s.day}</span>
                     <span className="text-[10px] font-black uppercase text-blue-500 bg-blue-500/10 px-3 py-1 rounded-lg font-mono">{protocols.find(p => p.id === s.protocolId)?.name || 'Protocol'}</span>
                   </div>
-                  <h3 className="text-2xl font-black tracking-tighter uppercase text-white">
-                    {new Date(s.date).toLocaleDateString(undefined, { 
-                      day: '2-digit', 
-                      month: 'short', 
-                      year: 'numeric',
-                      weekday: 'short'
-                    }).toUpperCase()}
-                  </h3>
+                  <h3 className="text-2xl font-black tracking-tighter uppercase text-white">{new Date(s.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
                 </div>
                 <button onClick={() => onDelete(s.id)} className="p-3 text-gray-800 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={20} /></button>
               </div>
@@ -1311,18 +1356,18 @@ const ReportsView: React.FC<{ sessions: WorkoutSession[]; prs: Record<string, Ex
     filteredSessions.forEach(s => {
       s.exercises.forEach(ex => {
         const muscles = getBodyHighlighterMuscles(ex.name);
-        const setWeight = ex.sets.length;
+        const setCount = ex.sets.length;
         muscles.forEach(m => {
-          if (['chest'].includes(m)) counts.chest += setWeight;
-          else if (['upper-back', 'trapezius', 'lower-back'].includes(m)) counts.back += setWeight;
-          else if (['front-deltoids', 'back-deltoids'].includes(m)) counts.shoulders += setWeight;
-          else if (['biceps'].includes(m)) counts.biceps += setWeight;
-          else if (['triceps'].includes(m)) counts.triceps += setWeight;
-          else if (['quadriceps'].includes(m)) counts.quads += setWeight;
-          else if (['hamstring'].includes(m)) counts.hamstrings += setWeight;
-          else if (['gluteal', 'abductors', 'adductor'].includes(m)) counts.glutes += setWeight;
-          else if (['calves'].includes(m)) counts.calves += setWeight;
-          else if (['abs', 'obliques'].includes(m)) counts.core += setWeight;
+          if (['chest'].includes(m)) counts.chest += setCount;
+          else if (['upper-back', 'trapezius', 'lower-back'].includes(m)) counts.back += setCount;
+          else if (['front-deltoids', 'back-deltoids'].includes(m)) counts.shoulders += setCount;
+          else if (['biceps'].includes(m)) counts.biceps += setCount;
+          else if (['triceps'].includes(m)) counts.triceps += setCount;
+          else if (['quadriceps'].includes(m)) counts.quads += setCount;
+          else if (['hamstring'].includes(m)) counts.hamstrings += setCount;
+          else if (['gluteal', 'abductors', 'adductor'].includes(m)) counts.glutes += setCount;
+          else if (['calves'].includes(m)) counts.calves += setCount;
+          else if (['abs', 'obliques'].includes(m)) counts.core += setCount;
         });
       });
     });
