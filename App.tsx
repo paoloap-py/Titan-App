@@ -657,6 +657,9 @@ const WorkoutLogger: React.FC<{
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
   const [warmupStatus, setWarmupStatus] = useState<boolean[]>([]);
   const [stretchingStatus, setStretchingStatus] = useState<boolean[]>([]);
+  const [stretchingCompleted, setStretchingCompleted] = useState(false);
+  const [cardioCompleted, setCardioCompleted] = useState(false);
+  const [floatingTimerExpanded, setFloatingTimerExpanded] = useState(false);
   const initialLoadRef = useRef(false);
   const [selectedExerciseModal, setSelectedExerciseModal] = useState<string | null>(null);
 
@@ -689,6 +692,9 @@ const WorkoutLogger: React.FC<{
     setDay(templateDay);
     setWarmupStatus(new Array(template.warmup.length).fill(false));
     setStretchingStatus(new Array(template.stretching.length).fill(false));
+    setStretchingCompleted(false);
+    setCardioCompleted(false);
+    setFloatingTimerExpanded(false);
     
     const newExs: ExerciseEntry[] = template.exercises.map(rawName => {
       const patternMatch = rawName.match(/(\d+)\s*x\s*([0-9\–\-FailureMax\sHold]+)/i);
@@ -980,20 +986,37 @@ const WorkoutLogger: React.FC<{
             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Accessibility size={14} className="text-blue-500" /> POST-WORKOUT STRETCHING</h3>
             <span className="text-[10px] font-mono text-zinc-600 uppercase">Est. 5 Mins</span>
           </div>
-          <div className="grid grid-cols-1 gap-3">
-            {currentProtocolDay.stretching.map((item, idx) => (
-              <button key={idx} onClick={() => toggleStretching(idx)} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${stretchingStatus[idx] ? 'bg-zinc-900 border-blue-500/20 text-blue-500' : 'bg-black border-white/5 text-zinc-400 hover:border-white/10'}`}>
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${stretchingStatus[idx] ? 'bg-blue-500 border-blue-500 text-black' : 'border-white/10 text-transparent'}`}>
-                  <Check size={14} strokeWidth={4} />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-tight">{item}</span>
-              </button>
-            ))}
-          </div>
+          <div className="text-[10px] font-mono text-zinc-600 uppercase mb-2">{currentProtocolDay.stretching.join(' • ')}</div>
+          <button 
+            onClick={() => setStretchingCompleted(!stretchingCompleted)} 
+            className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left w-full ${stretchingCompleted ? 'bg-zinc-900 border-blue-500/20 text-blue-500' : 'bg-black border-white/5 text-zinc-400 hover:border-white/10'}`}
+          >
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${stretchingCompleted ? 'bg-blue-500 border-blue-500 text-black' : 'border-white/10 text-transparent'}`}>
+              <Check size={14} strokeWidth={4} />
+            </div>
+            <span className="text-[11px] font-black uppercase tracking-tight">{stretchingCompleted ? 'STRETCHING DONE' : 'MARK STRETCHING AS COMPLETED'}</span>
+          </button>
         </div>
       )}
 
-      <button onClick={() => { if(exercises.length > 0) { setSessionEndTime(Date.now()); onSave({ id: crypto.randomUUID(), date: new Date().toISOString(), week, day, exercises, protocolId: protocol.id, warmupCompleted: warmupStatus, stretchingCompleted: stretchingStatus }); } }} className="w-full py-8 text-white rounded-[2.5rem] font-black text-2xl tracking-tighter uppercase shadow-2xl hover:brightness-110 transition-all flex items-center justify-center gap-4" style={{ backgroundColor: protocol.accentColor }}>
+      {/* CARDIO SECTION */}
+      <div className="bg-[#0e0e0e] border border-white/5 rounded-3xl p-6 space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2"><Activity size={14} className="text-orange-500" /> CARDIO</h3>
+          <span className="text-[10px] font-mono text-zinc-600 uppercase">5 mins | 7.0 km/h | Incline 3</span>
+        </div>
+        <button 
+          onClick={() => setCardioCompleted(!cardioCompleted)} 
+          className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left w-full ${cardioCompleted ? 'bg-zinc-900 border-orange-500/20 text-orange-500' : 'bg-black border-white/5 text-zinc-400 hover:border-white/10'}`}
+        >
+          <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${cardioCompleted ? 'bg-orange-500 border-orange-500 text-black' : 'border-white/10 text-transparent'}`}>
+            <Check size={14} strokeWidth={4} />
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-tight">{cardioCompleted ? 'CARDIO DONE' : 'MARK CARDIO AS COMPLETED'}</span>
+        </button>
+      </div>
+
+      <button onClick={() => { if(exercises.length > 0) { setSessionEndTime(Date.now()); onSave({ id: crypto.randomUUID(), date: new Date().toISOString(), week, day, exercises, protocolId: protocol.id, warmupCompleted: warmupStatus, stretchingCompleted: stretchingStatus, cardioCompleted: cardioCompleted }); } }} className="w-full py-8 text-white rounded-[2.5rem] font-black text-2xl tracking-tighter uppercase shadow-2xl hover:brightness-110 transition-all flex items-center justify-center gap-4" style={{ backgroundColor: protocol.accentColor }}>
         <Flame className="fill-white" /> COMMIT SESSION
       </button>
 
@@ -1017,6 +1040,59 @@ const WorkoutLogger: React.FC<{
             })()}
             <button onClick={() => setSelectedExerciseModal(null)} className="w-full mt-12 py-6 bg-white text-black rounded-3xl font-black text-xs uppercase tracking-widest">EXIT ANALYSIS</button>
           </div>
+        </div>
+      )}
+
+      {/* FLOATING TIMER */}
+      {sessionStartTime && !sessionEndTime && (
+        <div 
+          className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-50 cursor-pointer"
+          onClick={() => setFloatingTimerExpanded(!floatingTimerExpanded)}
+        >
+          {floatingTimerExpanded ? (
+            <div className="bg-[#0e0e0e] border border-white/10 rounded-3xl p-4 shadow-2xl animate-in zoom-in-95 duration-200 min-w-[180px]">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-black text-gray-500 uppercase">Elapsed</span>
+                  <span className="text-lg font-black tabular-nums" style={{ color: protocol.accentColor }}>{formatDuration(sessionStats.elapsed)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-black text-gray-500 uppercase">Projected</span>
+                  <span className="text-lg font-black text-blue-500 tabular-nums">{formatDuration(sessionStats.projectedTotal)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-black text-gray-500 uppercase">Target</span>
+                  <span className="text-lg font-black text-gray-400 tabular-nums">{currentProtocolDay?.targetDuration || 60}:00</span>
+                </div>
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-2">
+                  <div 
+                    className="h-full transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.min(100, (sessionStats.elapsed / ((currentProtocolDay?.targetDuration || 60) * 60 * 1000)) * 100)}%`,
+                      backgroundColor: protocol.accentColor 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <svg className="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="32" cy="32" r="28" fill="#0e0e0e" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
+                <circle 
+                  cx="32" cy="32" r="28" 
+                  fill="transparent" 
+                  stroke={protocol.accentColor} 
+                  strokeWidth="4" 
+                  strokeDasharray={175.93} 
+                  strokeDashoffset={175.93 * (1 - Math.min(1, sessionStats.elapsed / ((currentProtocolDay?.targetDuration || 60) * 60 * 1000)))} 
+                  strokeLinecap="round" 
+                  className="transition-all duration-1000"
+                />
+              </svg>
+              <span className="text-xs font-black tabular-nums text-white z-10">{formatDuration(sessionStats.elapsed)}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
