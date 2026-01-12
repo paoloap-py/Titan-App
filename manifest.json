@@ -1,0 +1,17 @@
+{
+  "name": "TITAN 133 Logbook",
+  "short_name": "TITAN 133",
+  "description": "Professional Strength & Conditioning Logbook",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554032.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
