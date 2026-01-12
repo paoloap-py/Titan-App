@@ -1,4 +1,4 @@
-const CACHE_NAME = 'titan-v5';
+const CACHE_NAME = 'titan-v6';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
