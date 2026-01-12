@@ -380,6 +380,18 @@ const Dashboard: React.FC<{
     }, 0) / 1000;
   }, [sessions]);
 
+  const weeklySessionCount = useMemo(() => {
+    if (sessions.length === 0) return 0;
+    const latestWeek = sessions[0].week;
+    return sessions.filter(s => s.week === latestWeek && s.protocolId === protocol.id).length;
+  }, [sessions, protocol.id]);
+
+  const getSessionsInDays = (days: number) => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    return sessions.filter(s => new Date(s.date) >= cutoff).length;
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -400,9 +412,29 @@ const Dashboard: React.FC<{
         ))}</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard label="SESSIONS THIS WEEK" value={`${weeklySessionCount}/5`} accent={protocol.accentColor} />
         <StatCard label="TOTAL TONNAGE" value={`${totalTonnage.toFixed(1)}t`} accent={protocol.accentColor} />
         <StatCard label="PROTOCOL" value={protocol.name} accent={protocol.accentColor} />
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-[#0e0e0e] border border-white/5 p-4 rounded-2xl">
+          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">15 DAYS</p>
+          <p className="text-xl font-black" style={{ color: protocol.accentColor }}>{getSessionsInDays(15)}</p>
+        </div>
+        <div className="bg-[#0e0e0e] border border-white/5 p-4 rounded-2xl">
+          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">30 DAYS</p>
+          <p className="text-xl font-black" style={{ color: protocol.accentColor }}>{getSessionsInDays(30)}</p>
+        </div>
+        <div className="bg-[#0e0e0e] border border-white/5 p-4 rounded-2xl">
+          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">60 DAYS</p>
+          <p className="text-xl font-black" style={{ color: protocol.accentColor }}>{getSessionsInDays(60)}</p>
+        </div>
+        <div className="bg-[#0e0e0e] border border-white/5 p-4 rounded-2xl">
+          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">90 DAYS</p>
+          <p className="text-xl font-black" style={{ color: protocol.accentColor }}>{getSessionsInDays(90)}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
