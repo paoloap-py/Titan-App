@@ -1,3 +1,4 @@
+typescript
 export interface ExerciseSet {
   reps: number;
   weight: number;
@@ -101,5 +102,6 @@ export interface Alert {
   title: string;
   message: string;
   exercise?: string;
+  muscleGroup?: string;
   createdAt: string;
 }
