@@ -639,7 +639,6 @@ const App: React.FC = () => {
                   onClick={() => kpi.clickable && todayWorkoutDay && handleStartSession(todayWorkoutDay)}
                   className={`bg-slate-900 border p-5 rounded-3xl ${kpi.blink ? 'border-red-500 animate-pulse' : 'border-slate-800'} ${kpi.clickable ? 'cursor-pointer hover:border-red-400 active:scale-95 transition-all' : ''}`}
                 >
-                  <kpi.icon className={`w-4 h-4 mb-2 ${kpi.color}`} />
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{kpi.label}</p>
                   <div className="flex items-baseline gap-1 mt-1">
                     <span className={`text-3xl font-black ${kpi.blink ? 'text-red-500' : 'text-white'}`}>{kpi.val}</span>
