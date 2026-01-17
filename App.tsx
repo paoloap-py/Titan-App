@@ -238,19 +238,24 @@ const App: React.FC = () => {
   };
 
   // Get best previous volume for an exercise (for PR detection)
+  // Returns -1 if no previous data exists (so nothing shows as PR)
   const getBestPreviousVolume = (exerciseName: string): number => {
-    let bestVolume = 0;
+    let bestVolume = -1;
+    let hasData = false;
     sessions.forEach(session => {
       session.exercises.forEach(ex => {
         if (ex.name.toLowerCase() === exerciseName.toLowerCase()) {
           ex.sets.forEach(set => {
-            const volume = calculateVolume(set.weight, set.reps);
-            if (volume > bestVolume) bestVolume = volume;
+            if (set.weight > 0 && set.reps > 0) {
+              hasData = true;
+              const volume = calculateVolume(set.weight, set.reps);
+              if (volume > bestVolume) bestVolume = volume;
+            }
           });
         }
       });
     });
-    return bestVolume;
+    return hasData ? bestVolume : -1;
   };
 
   // Get last session's data for an exercise (for auto-population)
@@ -533,19 +538,19 @@ const App: React.FC = () => {
             )}
 
             {currentSession && (
-              <div className="bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-center justify-between shadow-2xl animate-pulse">
+              <div className="bg-orange-500 border border-orange-400 p-6 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-center justify-between shadow-2xl animate-pulse">
                 <div className="flex items-center gap-4">
                   <div className="bg-white/20 p-3 rounded-2xl"><Activity className="w-8 h-8 text-white" /></div>
                   <div>
                     <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Active Session Detected</h3>
-                    <p className="text-sm text-red-100 font-bold uppercase tracking-wide">
+                    <p className="text-sm text-orange-100 font-bold uppercase tracking-wide">
                       {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name} • {currentSession.exercises.length} Movements
                     </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setActiveTab('session')}
-                  className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase italic tracking-widest shadow-xl flex items-center gap-2 active:scale-95 transition-all"
+                  className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black uppercase italic tracking-widest shadow-xl flex items-center gap-2 active:scale-95 transition-all"
                 >
                   <Play className="w-5 h-5 fill-current" /> Resume Now
                 </button>
@@ -597,7 +602,7 @@ const App: React.FC = () => {
                 const isComplete = completedSetsCount >= ex.plannedSets;
                 const maxTargetReps = parseMaxReps(ex.targetRepRange);
                 const bestPreviousVolume = getBestPreviousVolume(ex.name);
-                const hasPR = ex.sets.some(set => set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume);
+                const hasPR = bestPreviousVolume > 0 && ex.sets.some(set => set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume);
                 return (
                   <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${hasPR ? 'border-yellow-500/50' : isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
                     <div className="p-6 border-b border-slate-800/50 flex justify-between items-start">
@@ -618,7 +623,7 @@ const App: React.FC = () => {
                     <div className="p-6 space-y-3">
                       {ex.sets.map((set, i) => {
                         const isTooLight = set.reps > maxTargetReps + 3 && set.weight > 0;
-                        const isPRSet = set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
+                        const isPRSet = bestPreviousVolume > 0 && set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
                         return (
                           <div key={i}>
                             <div className="flex items-center gap-3">
