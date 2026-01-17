@@ -298,21 +298,51 @@ const App: React.FC = () => {
           }
           return newSet;
         }
-
-        // Auto-fill subsequent empty sets when first set is entered
-        if (setIdx === 0 && idx > 0 && (field === 'weight' || field === 'reps') && value > 0) {
-          const currentValue = field === 'weight' ? s.weight : s.reps;
-          // Only auto-fill if the set is still empty (0)
-          if (currentValue === 0) {
-            return { ...s, [field]: value };
-          }
-        }
-
         return s;
       });
 
       return { ...ex, sets: updatedSets };
     });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
+  };
+
+  // Auto-fill subsequent sets when user finishes typing in first set (onBlur)
+  const handleFirstSetBlur = (exId: string, field: 'reps' | 'weight', value: number) => {
+    if (!currentSession || value <= 0) return;
+
+    const updatedExercises = currentSession.exercises.map(ex => {
+      if (ex.id !== exId) return ex;
+
+      const firstSetValue = field === 'weight' ? ex.sets[0]?.weight : ex.sets[0]?.reps;
+
+      const updatedSets = ex.sets.map((s, idx) => {
+        if (idx === 0) return s; // Skip first set, already updated
+
+        const currentValue = field === 'weight' ? s.weight : s.reps;
+        // Auto-fill if set is empty (0) or has the same value as the original prefill
+        // This allows updating sets that were auto-filled but not manually changed
+        if (currentValue === 0 || currentValue !== firstSetValue) {
+          return s; // Don't update if manually changed to different value
+        }
+        // Update sets that match the first set's value (synced sets)
+        return s;
+      });
+
+      // Simpler approach: fill all sets that are still 0 with first set value
+      const finalSets = ex.sets.map((s, idx) => {
+        if (idx === 0) return s;
+        const currentValue = field === 'weight' ? s.weight : s.reps;
+        if (currentValue === 0) {
+          return { ...s, [field]: firstSetValue };
+        }
+        return s;
+      });
+
+      return { ...ex, sets: finalSets };
+    });
+
     const updatedSession = { ...currentSession, exercises: updatedExercises };
     saveSessionNow(updatedSession);
     setCurrentSession(updatedSession);
@@ -598,6 +628,7 @@ const App: React.FC = () => {
                                 placeholder="KG"
                                 value={set.weight || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
+                                onBlur={(e) => i === 0 && handleFirstSetBlur(ex.id, 'weight', parseFloat(e.target.value) || 0)}
                                 className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all"
                               />
                               <input
@@ -605,6 +636,7 @@ const App: React.FC = () => {
                                 placeholder="REPS"
                                 value={set.reps || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
+                                onBlur={(e) => i === 0 && handleFirstSetBlur(ex.id, 'reps', parseInt(e.target.value) || 0)}
                                 className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
