@@ -618,11 +618,21 @@ const App: React.FC = () => {
           const progress60 = getProgressForDays(60);
           const progress90 = getProgressForDays(90);
 
+          // Calculate total sessions target based on time since first session (~5/week)
+          const getTotalSessionsTarget = () => {
+            if (sessions.length === 0) return 5; // Default target for new users
+            const firstSessionDate = new Date(Math.min(...sessions.map(s => new Date(s.date).getTime())));
+            const daysSinceFirst = Math.max(7, Math.ceil((now.getTime() - firstSessionDate.getTime()) / (1000 * 60 * 60 * 24)));
+            const weeksSinceFirst = daysSinceFirst / 7;
+            return Math.round(weeksSinceFirst * 5); // ~5 sessions per week
+          };
+          const totalSessionsTarget = getTotalSessionsTarget();
+
           return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400', blink: false, clickable: false },
+                { label: 'Total Sessions', val: `${sessions.length}/${totalSessionsTarget}`, icon: Activity, color: 'text-green-400', blink: false, clickable: false },
                 { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500', blink: false, clickable: false },
                 { label: 'Today', val: isRestDay ? 'Rest' : todayProtocol?.name || '-', icon: Zap, color: 'text-red-500', blink: !isRestDay, clickable: !isRestDay && todayWorkoutDay !== null },
               ].map((kpi, i) => (
