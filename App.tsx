@@ -233,6 +233,7 @@ const App: React.FC = () => {
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerExpanded, setTimerExpanded] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -305,16 +306,18 @@ const App: React.FC = () => {
         console.error("TITAN 133: Failed to load storage data", e);
       }
     }
+    setHasLoaded(true);
   }, []);
 
-  // Persistence logic
+  // Persistence logic - only run after initial load to prevent overwriting
   useEffect(() => {
+    if (!hasLoaded) return;
     localStorage.setItem('titan_data', JSON.stringify({
       sessions,
       alerts,
       currentSession
     }));
-  }, [sessions, alerts, currentSession]);
+  }, [sessions, alerts, currentSession, hasLoaded]);
 
   // Immediate save helper for set operations
   const saveSessionNow = (updatedSession: WorkoutSession) => {
