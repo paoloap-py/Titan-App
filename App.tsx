@@ -867,34 +867,32 @@ const App: React.FC = () => {
               <button onClick={() => setActiveTab('dashboard')} className="p-3 bg-slate-800 rounded-xl text-slate-400"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Warmup Section */}
+            {/* Warmup Section - Single checkbox */}
             {(() => {
               const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
               if (!day?.warmup?.length) return null;
               const allCompleted = currentSession.warmupCompleted?.every(c => c);
+              const toggleAllWarmup = () => {
+                if (!currentSession) return;
+                const newValue = !allCompleted;
+                const updated = new Array(day.warmup.length).fill(newValue);
+                const updatedSession = { ...currentSession, warmupCompleted: updated };
+                saveSessionNow(updatedSession);
+                setCurrentSession(updatedSession);
+              };
               return (
-                <div className={`bg-emerald-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}>
-                  <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={toggleAllWarmup}
+                  className={`w-full bg-emerald-950/30 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}
+                >
+                  <div className="text-left">
                     <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Warmup</h3>
-                    {allCompleted && <Check className="w-4 h-4 text-emerald-400" />}
+                    <p className={`text-sm font-bold mt-1 ${allCompleted ? 'text-emerald-400' : 'text-emerald-200'}`}>{day.warmup.join(' • ')}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {day.warmup.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => toggleWarmupItem(i)}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 ${
-                          currentSession.warmupCompleted?.[i]
-                            ? 'bg-emerald-500 text-black'
-                            : 'text-emerald-200 bg-emerald-900/30'
-                        }`}
-                      >
-                        {currentSession.warmupCompleted?.[i] && <Check className="w-3 h-3" />}
-                        {item}
-                      </button>
-                    ))}
+                  <div className={`p-3 rounded-xl transition-all ${allCompleted ? 'bg-emerald-500 text-black' : 'bg-emerald-500/20'}`}>
+                    {allCompleted ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6 text-emerald-400" />}
                   </div>
-                </div>
+                </button>
               );
             })()}
 
@@ -917,7 +915,6 @@ const App: React.FC = () => {
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">{ex.targetRepRange} Reps</span>
                           {ex.requiresStraps && <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-2 py-1 rounded-md">🎗️ Straps</span>}
-                          {ex.hasLongRest && <span className="text-[10px] font-black bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md">⏱️ 3min</span>}
                           {ex.hasFinisherTarget && <span className="text-[10px] font-black bg-red-500/10 text-red-400 px-2 py-1 rounded-md">✋ Peak 10s</span>}
                           {ex.hasAnchorTarget && <span className="text-[10px] font-black bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md">⚓ Stretch 30s</span>}
                           {ex.requiresDropSet && <span className="text-[10px] font-black bg-pink-500/10 text-pink-400 px-2 py-1 rounded-md">🏳️ Drop Set</span>}
@@ -1000,34 +997,32 @@ const App: React.FC = () => {
               })}
             </div>
 
-            {/* Post-Workout Stretching Section */}
+            {/* Post-Workout Stretching Section - Single checkbox */}
             {(() => {
               const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
               if (!day?.stretching?.length) return null;
               const allCompleted = currentSession.stretchingCompleted?.every(c => c);
+              const toggleAllStretching = () => {
+                if (!currentSession) return;
+                const newValue = !allCompleted;
+                const updated = new Array(day.stretching.length).fill(newValue);
+                const updatedSession = { ...currentSession, stretchingCompleted: updated };
+                saveSessionNow(updatedSession);
+                setCurrentSession(updatedSession);
+              };
               return (
-                <div className={`bg-emerald-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}>
-                  <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={toggleAllStretching}
+                  className={`w-full bg-emerald-950/30 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}
+                >
+                  <div className="text-left">
                     <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Post-Workout Stretching</h3>
-                    {allCompleted && <Check className="w-4 h-4 text-emerald-400" />}
+                    <p className={`text-sm font-bold mt-1 ${allCompleted ? 'text-emerald-400' : 'text-emerald-200'}`}>{day.stretching.join(' • ')}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {day.stretching.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => toggleStretchingItem(i)}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 ${
-                          currentSession.stretchingCompleted?.[i]
-                            ? 'bg-emerald-500 text-black'
-                            : 'text-emerald-200 bg-emerald-900/30'
-                        }`}
-                      >
-                        {currentSession.stretchingCompleted?.[i] && <Check className="w-3 h-3" />}
-                        {item}
-                      </button>
-                    ))}
+                  <div className={`p-3 rounded-xl transition-all ${allCompleted ? 'bg-emerald-500 text-black' : 'bg-emerald-500/20'}`}>
+                    {allCompleted ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6 text-emerald-400" />}
                   </div>
-                </div>
+                </button>
               );
             })()}
 
