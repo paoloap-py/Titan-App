@@ -234,6 +234,8 @@ const App: React.FC = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerExpanded, setTimerExpanded] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [restTimer, setRestTimer] = useState<number>(0);
+  const [restTimerActive, setRestTimerActive] = useState(false);
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -254,6 +256,31 @@ const App: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [currentSession?.id]);
+
+  // Rest timer countdown effect
+  useEffect(() => {
+    if (!restTimerActive || restTimer <= 0) {
+      if (restTimerActive && restTimer <= 0) {
+        setRestTimerActive(false);
+        // Vibrate when timer ends (if supported)
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRestTimer(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [restTimerActive, restTimer]);
+
+  // Start rest timer with duration based on exercise type
+  const startRestTimer = (isLongRest: boolean) => {
+    const duration = isLongRest ? 180 : 90; // 3:00 or 1:30
+    setRestTimer(duration);
+    setRestTimerActive(true);
+  };
 
   // Format seconds to MM:SS or MMM:SS
   const formatTime = (totalSeconds: number): string => {
@@ -420,7 +447,7 @@ const App: React.FC = () => {
     setActiveTab('session');
   };
 
-  const updateSet = (exId: string, setIdx: number, field: 'reps' | 'weight' | 'completed', value: any) => {
+  const updateSet = (exId: string, setIdx: number, field: 'reps' | 'weight' | 'completed', value: any, hasLongRest?: boolean) => {
     if (!currentSession) return;
     const updatedExercises = currentSession.exercises.map(ex => {
       if (ex.id !== exId) return ex;
@@ -442,6 +469,11 @@ const App: React.FC = () => {
     const updatedSession = { ...currentSession, exercises: updatedExercises };
     saveSessionNow(updatedSession);
     setCurrentSession(updatedSession);
+
+    // Start rest timer when marking set as completed
+    if (field === 'completed' && value === true) {
+      startRestTimer(hasLongRest || false);
+    }
   };
 
   // Auto-fill subsequent sets when user finishes typing (onBlur)
@@ -953,7 +985,7 @@ const App: React.FC = () => {
                                 className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
-                                onClick={() => updateSet(ex.id, i, 'completed', !set.completed)}
+                                onClick={() => updateSet(ex.id, i, 'completed', !set.completed, ex.hasLongRest)}
                                 className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${set.completed ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}
                               >
                                 <Check className="w-6 h-6" />
@@ -1047,8 +1079,8 @@ const App: React.FC = () => {
             </button>
 
             <div className="fixed bottom-6 left-6 right-6">
-              <button 
-                onClick={handleFinishSession} 
+              <button
+                onClick={handleFinishSession}
                 disabled={loadingAi}
                 className="w-full bg-red-600 text-white p-5 rounded-3xl font-black text-xl uppercase italic shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50"
               >
@@ -1056,6 +1088,24 @@ const App: React.FC = () => {
                 {loadingAi ? 'Titan AI Analyzing...' : 'Commit Session'}
               </button>
             </div>
+
+            {/* Rest Timer Overlay */}
+            {restTimerActive && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+                <div className="text-center">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Rest Timer</p>
+                  <p className={`text-8xl font-black font-mono ${restTimer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                    {formatTime(restTimer)}
+                  </p>
+                  <button
+                    onClick={() => setRestTimerActive(false)}
+                    className="mt-8 bg-slate-800 text-white px-8 py-3 rounded-2xl font-black uppercase text-sm tracking-wider active:scale-95 transition-all"
+                  >
+                    Skip Rest
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Floating Circular Timer Button */}
             {(() => {
