@@ -219,6 +219,17 @@ const App: React.FC = () => {
     return bestVolume;
   };
 
+  // Get last session's data for an exercise (for auto-population)
+  const getLastSessionExercise = (exerciseName: string): ExerciseEntry | null => {
+    for (const session of sessions) {
+      const exercise = session.exercises.find(
+        ex => ex.name.toLowerCase() === exerciseName.toLowerCase()
+      );
+      if (exercise) return exercise;
+    }
+    return null;
+  };
+
   const handleStartSession = (dayNum: number) => {
     const protocol = DEFAULT_PROTOCOLS[0];
     const day = protocol.days.find(d => d.day === dayNum);
@@ -237,15 +248,34 @@ const App: React.FC = () => {
         const name = parts[0].trim();
         const config = parts[1]?.trim() || '';
         const plannedSetsCount = parseInt(config.split('x')[0]) || 3;
-        
+
         const isBW = isBodyweightExercise(name);
         const defaultWeight = isBW ? USER_BODYWEIGHT : 0;
+
+        // Get last session's data for this exercise
+        const lastExercise = getLastSessionExercise(name);
+
+        // Create sets with auto-populated data from last session
+        const sets = Array.from({ length: plannedSetsCount }, (_, setIdx) => {
+          // Try to get data from last session's corresponding set
+          const lastSet = lastExercise?.sets[setIdx];
+          if (lastSet && lastSet.weight > 0) {
+            return {
+              reps: lastSet.reps > 0 ? lastSet.reps : 0,
+              weight: lastSet.weight,
+              completed: false
+            };
+          }
+          // Fall back to default (bodyweight or 0)
+          return { reps: 0, weight: defaultWeight, completed: false };
+        });
+
         return {
           id: Math.random().toString(36).substr(2, 9),
           name,
           targetRepRange: config.split('x')[1]?.trim().split(' ')[0] || '8-10',
           plannedSets: plannedSetsCount,
-          sets: Array.from({ length: plannedSetsCount }, () => ({ reps: 0, weight: defaultWeight, completed: false })),
+          sets,
           requiresStraps: exName.includes('🎗️'),
           hasFinisherTarget: exName.includes('✋'),
           hasAnchorTarget: exName.includes('⚓'),
