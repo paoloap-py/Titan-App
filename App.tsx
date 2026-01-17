@@ -49,7 +49,7 @@ import { getBodyHighlighterMuscles } from './muscleMapping';
 import * as gemini from './services/geminiService';
 
 // User bodyweight for bodyweight exercises
-const USER_BODYWEIGHT = 95;
+const USER_BODYWEIGHT = 85;
 
 // Bodyweight exercises that should auto-fill with user's weight
 const BODYWEIGHT_EXERCISES = [
