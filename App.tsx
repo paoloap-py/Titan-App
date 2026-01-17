@@ -983,14 +983,19 @@ const App: React.FC = () => {
               return (
                 <button
                   onClick={toggleAllWarmup}
-                  className={`w-full bg-slate-900 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${allCompleted ? 'border-green-500/50' : 'border-slate-800'}`}
+                  className={`w-full bg-slate-900 border rounded-[2rem] overflow-hidden transition-all active:scale-[0.98] ${allCompleted ? 'border-green-500/30' : 'border-slate-800'}`}
                 >
-                  <div className="text-left">
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Warmup</h3>
-                    <p className={`text-sm font-bold mt-1 ${allCompleted ? 'text-green-400' : 'text-slate-300'}`}>{day.warmup.join(' • ')}</p>
-                  </div>
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${allCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
-                    <Check className="w-6 h-6" />
+                  <div className="p-6 flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Warmup</h3>
+                        {allCompleted && <Check className="w-5 h-5 text-green-500" />}
+                      </div>
+                      <p className={`text-sm font-bold mt-2 ${allCompleted ? 'text-green-400' : 'text-slate-400'}`}>{day.warmup.join(' • ')}</p>
+                    </div>
+                    <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${allCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
+                      <Check className="w-6 h-6" />
+                    </div>
                   </div>
                 </button>
               );
@@ -1113,14 +1118,19 @@ const App: React.FC = () => {
               return (
                 <button
                   onClick={toggleAllStretching}
-                  className={`w-full bg-slate-900 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${allCompleted ? 'border-green-500/50' : 'border-slate-800'}`}
+                  className={`w-full bg-slate-900 border rounded-[2rem] overflow-hidden transition-all active:scale-[0.98] ${allCompleted ? 'border-green-500/30' : 'border-slate-800'}`}
                 >
-                  <div className="text-left">
-                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Post-Workout Stretching</h3>
-                    <p className={`text-sm font-bold mt-1 ${allCompleted ? 'text-green-400' : 'text-slate-300'}`}>{day.stretching.join(' • ')}</p>
-                  </div>
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${allCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
-                    <Check className="w-6 h-6" />
+                  <div className="p-6 flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Stretching</h3>
+                        {allCompleted && <Check className="w-5 h-5 text-green-500" />}
+                      </div>
+                      <p className={`text-sm font-bold mt-2 ${allCompleted ? 'text-green-400' : 'text-slate-400'}`}>{day.stretching.join(' • ')}</p>
+                    </div>
+                    <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${allCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
+                      <Check className="w-6 h-6" />
+                    </div>
                   </div>
                 </button>
               );
@@ -1129,20 +1139,25 @@ const App: React.FC = () => {
             {/* Cardio Section */}
             <button
               onClick={toggleCardio}
-              className={`w-full bg-slate-900 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${
-                currentSession.cardioCompleted ? 'border-green-500/50' : 'border-slate-800'
+              className={`w-full bg-slate-900 border rounded-[2rem] overflow-hidden transition-all active:scale-[0.98] ${
+                currentSession.cardioCompleted ? 'border-green-500/30' : 'border-slate-800'
               }`}
             >
-              <div className="text-left">
-                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Cardio Finisher</h3>
-                <p className={`text-lg font-black mt-1 ${currentSession.cardioCompleted ? 'text-green-400' : 'text-slate-300'}`}>5 min Treadmill</p>
-                <div className="flex gap-3 mt-1">
-                  <span className="text-[10px] font-bold text-slate-500">Speed: 7.0 km/h</span>
-                  <span className="text-[10px] font-bold text-slate-500">Incline: Level 3</span>
+              <div className="p-6 flex justify-between items-center">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Cardio Finisher</h3>
+                    {currentSession.cardioCompleted && <Check className="w-5 h-5 text-green-500" />}
+                  </div>
+                  <p className={`text-sm font-bold mt-2 ${currentSession.cardioCompleted ? 'text-green-400' : 'text-slate-400'}`}>5 min Treadmill</p>
+                  <div className="flex gap-3 mt-1">
+                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md">Speed: 7.0 km/h</span>
+                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md">Incline: Level 3</span>
+                  </div>
                 </div>
-              </div>
-              <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${currentSession.cardioCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
-                <Check className="w-6 h-6" />
+                <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${currentSession.cardioCompleted ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}>
+                  <Check className="w-6 h-6" />
+                </div>
               </div>
             </button>
 
