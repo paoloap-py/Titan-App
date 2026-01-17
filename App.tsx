@@ -154,12 +154,21 @@ const App: React.FC = () => {
 
   // Persistence logic
   useEffect(() => {
-    localStorage.setItem('titan_data', JSON.stringify({ 
-      sessions, 
-      alerts, 
-      currentSession 
+    localStorage.setItem('titan_data', JSON.stringify({
+      sessions,
+      alerts,
+      currentSession
     }));
   }, [sessions, alerts, currentSession]);
+
+  // Immediate save helper for set operations
+  const saveSessionNow = (updatedSession: WorkoutSession) => {
+    localStorage.setItem('titan_data', JSON.stringify({
+      sessions,
+      alerts,
+      currentSession: updatedSession
+    }));
+  };
 
   const handleStartSession = (dayNum: number) => {
     const protocol = DEFAULT_PROTOCOLS[0];
@@ -212,7 +221,9 @@ const App: React.FC = () => {
       });
       return { ...ex, sets: updatedSets };
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const addSet = (exId: string) => {
@@ -226,7 +237,9 @@ const App: React.FC = () => {
         sets: [...ex.sets, { reps: 0, weight: newWeight, completed: false }]
       };
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const removeSet = (exId: string) => {
@@ -237,7 +250,9 @@ const App: React.FC = () => {
       }
       return ex;
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const handleFinishSession = async () => {
