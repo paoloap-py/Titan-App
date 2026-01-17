@@ -14,6 +14,7 @@ export interface ExerciseEntry {
   name: string;
   targetRepRange: string;
   sets: ExerciseSet[];
+  plannedSets: number;
   hasLongRest?: boolean;
   requiresStraps?: boolean;
   hasFinisherTarget?: boolean;
