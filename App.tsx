@@ -555,21 +555,6 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Today's Workout Section - only show on training days AND when no active session */}
-            {!isRestDay && todayProtocol && !currentSession && (
-              <button
-                onClick={() => handleStartSession(todayProtocol.day)}
-                className="w-full bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex justify-between items-center shadow-2xl hover:bg-red-700 active:scale-95 transition-all"
-              >
-                <div>
-                  <p className="text-[10px] font-black text-red-200 uppercase tracking-widest">Today's Workout</p>
-                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
-                  <p className="text-sm text-red-100 mt-1">{todayProtocol.exercises.length} Movements • {todayProtocol.targetDuration} min</p>
-                </div>
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-            )}
-
             {aiInsight && (
               <div className="bg-indigo-950/30 border border-indigo-500/20 p-6 rounded-3xl flex gap-4 items-start shadow-2xl">
                 <div className="bg-indigo-500/10 p-2 rounded-xl"><Zap className="w-6 h-6 text-indigo-400" /></div>
@@ -586,7 +571,7 @@ const App: React.FC = () => {
                     onClick={() => handleStartSession(day.day)}
                     className={`p-6 rounded-3xl text-left transition-all active:scale-95 shadow-xl ${
                       isToday
-                        ? 'bg-red-600 border border-red-400 hover:bg-red-700'
+                        ? 'bg-red-600 border border-red-400 hover:bg-red-700 animate-pulse'
                         : 'bg-slate-900 border border-slate-800 hover:border-red-600/50'
                     }`}
                   >
