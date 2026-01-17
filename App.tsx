@@ -255,20 +255,16 @@ const App: React.FC = () => {
         // Get last session's data for this exercise
         const lastExercise = getLastSessionExercise(name);
 
-        // Create sets with auto-populated data from last session
-        const sets = Array.from({ length: plannedSetsCount }, (_, setIdx) => {
-          // Try to get data from last session's corresponding set
-          const lastSet = lastExercise?.sets[setIdx];
-          if (lastSet && lastSet.weight > 0) {
-            return {
-              reps: lastSet.reps > 0 ? lastSet.reps : 0,
-              weight: lastSet.weight,
-              completed: false
-            };
-          }
-          // Fall back to default (bodyweight or 0)
-          return { reps: 0, weight: defaultWeight, completed: false };
-        });
+        // Create sets with auto-populated data from last session's FIRST set
+        const lastFirstSet = lastExercise?.sets[0];
+        const prefilledWeight = lastFirstSet && lastFirstSet.weight > 0 ? lastFirstSet.weight : defaultWeight;
+        const prefilledReps = lastFirstSet && lastFirstSet.reps > 0 ? lastFirstSet.reps : 0;
+
+        const sets = Array.from({ length: plannedSetsCount }, () => ({
+          reps: prefilledReps,
+          weight: prefilledWeight,
+          completed: false
+        }));
 
         return {
           id: Math.random().toString(36).substr(2, 9),
