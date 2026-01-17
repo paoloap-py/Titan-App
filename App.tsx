@@ -95,64 +95,98 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       'Compounds (⏱️) get 3 min rest, isolations 90s'
     ],
     days: [
-      { 
-        day: 1, 
-        name: "Upper 1", 
+      {
+        day: 1,
+        name: "Upper 1",
         targetDuration: 95,
         warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns"],
         stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)"],
         exercises: [
-          "Meadows Row: 3 x 8–10 🎗️✋⚓⏱️", 
-          "Machine Chest Press: 3 x 8–10 ✋⚓⏱️", 
-          "Weighted Dips: 2 x 8–10 ⏱️", 
-          "Cable Y-Raise: 2 x 12–15 🏳️", 
-          "Reverse Cable Crossover: 3 x 12–15", 
+          "Meadows Row: 3 x 8–10 🎗️✋⚓⏱️",
+          "Machine Chest Press: 3 x 8–10 ✋⚓⏱️",
+          "Weighted Dips: 2 x 8–10 ⏱️",
+          "Cable Y-Raise: 2 x 12–15 🏳️",
+          "Reverse Cable Crossover: 3 x 12–15",
+          "Cable External Rotation: 2 x 15–20",
+          "Hanging Leg Raises: 2 x Failure",
+          "Dead Hang: 3 x Max Hold",
+          "Dragon Flag: 3 x Failure",
           "Skull Crushers: 2 x 10–12 ⏳⚓"
         ]
       },
-      { 
-        day: 2, 
-        name: "Upper 2", 
+      {
+        day: 2,
+        name: "Upper 2",
         targetDuration: 90,
         warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations"],
         stretching: ["Cross-Body Shoulder Stretch", "Child's Pose"],
         exercises: [
-          "Chest-Supported Dual-Cable Row: 3 x 10–12 🎗️✋⚓⏱️", 
-          "One-Arm Cable Pulldown: 3 x 10–12 🎗️⏱️", 
-          "Reverse Machine Fly: 3 x 12–15 ⏳", 
-          "Seated Cable Chest Fly: 2 x 12–15 ⚓", 
-          "Machine Preacher Curl: 3 x 8–10 ⏳⚓", 
-          "Cable Kickbacks: 3 x 12–15 🏳️"
+          "Chest-Supported Dual-Cable Row: 3 x 10–12 🎗️✋⚓⏱️",
+          "One-Arm Cable Pulldown: 3 x 10–12 🎗️⏱️",
+          "Reverse Machine Fly: 3 x 12–15 ⏳",
+          "Seated Cable Chest Fly: 2 x 12–15 ⚓",
+          "Machine Preacher Curl: 3 x 8–10 ⏳⚓",
+          "Cable Kickbacks: 3 x 12–15 🏳️",
+          "Hanging Corner Raises: 2 x Failure",
+          "Cable Twist: 2 x 12–15",
+          "Wrist Curl: 2 x 15–20"
         ]
       },
-      { 
-        day: 3, 
-        name: "Lower", 
+      {
+        day: 3,
+        name: "Lower",
         targetDuration: 92,
         warmup: ["Leg Swings", "BW Lunges", "Cossack Squats"],
         stretching: ["Pigeon Pose", "Couch Stretch"],
         exercises: [
-          "Hack Squat: 3 x 6–8 ⚓⏱️", 
-          "Pendulum Squat: 3 x 8–10 ⏱️", 
-          "Walking Lunges: 4 x 10/leg ⏱️", 
-          "RDL: 3 x 8–10 🎗️⚓⏱️", 
-          "Leg Curl Singolo: 3 x 10–12 🏳️", 
-          "Lying Leg Curl: 1 x 10–12 ⚓"
+          "Hack Squat: 3 x 6–8 ⚓⏱️",
+          "Pendulum Squat: 3 x 8–10 ⏱️",
+          "Walking Lunges: 4 x 10/leg ⏱️",
+          "RDL: 3 x 8–10 🎗️⚓⏱️",
+          "Leg Curl Singolo: 3 x 10–12 🏳️",
+          "Lying Leg Curl: 1 x 10–12 ⚓",
+          "Adductor Machine: 2 x 12–15",
+          "Abductor Machine: 2 x 12–15",
+          "Seated Calf Raise: 3 x 12–15 ⏳"
         ]
       },
-      { 
-        day: 4, 
-        name: "FB 1", 
+      {
+        day: 4,
+        name: "FB 1",
         targetDuration: 115,
         warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls"],
         stretching: ["Static Lunge Hold", "Hamstring Fold"],
         exercises: [
           "Chest-Supported Row: 3 x 8–10 🎗️⏱️",
-          "Leg Press: 3 x 10-12 ⏱️",
-          "Face Pulls: 3 x 15-20",
-          "Smith Incline Bench: 3 x 8-10 ✋⚓⏱️",
-          "Close Grip Bench: 2 x 10-12",
-          "Cable Lateral Raise: 3 x 15-20"
+          "Leg Press: 3 x 10–12 ⏱️",
+          "Face Pulls: 3 x 12–15 ⏳",
+          "45° Back Extension: 4 x 12–15",
+          "Smith Incline Bench: 2 x 6–8 ⚓⏱️",
+          "Close Grip Bench: 3 x 8–10 ⏱️",
+          "Cable Lateral Raise: 3 x 12–15 🏳️",
+          "EZ Bar Curl: 3 x 8–10 ⏳",
+          "Reverse EZ-Bar Curl: 3 x 12–15",
+          "Cable Crunch: 3 x 12–15 ⏳",
+          "Seated Calf Raise: 2 x 12–15 ⏳"
+        ]
+      },
+      {
+        day: 5,
+        name: "FB 2",
+        targetDuration: 110,
+        warmup: ["Cat-Cow", "Hip Circles", "Arm Circles"],
+        stretching: ["Quad Stretch", "Lat Stretch"],
+        exercises: [
+          "Dual-Cable EZ-Bar Lat Pulldown: 3 x 10–12 ✋⚓⏱️",
+          "Machine Shoulder Press: 4 x 8–10 ⏱️",
+          "Incline DB Press: 3 x 8–10 ⚓⏱️",
+          "High-to-Low Cable Fly: 2 x 12–15 🏳️",
+          "Standing Calf Raise: 3 x 12–15 ⏳",
+          "Bulgarian Split Squat: 3 x 8–10 ⏱️",
+          "Lying Leg Curl: 3 x 10–12 ⚓",
+          "Leg Extension: 2 x 12–15 🏳️⚓",
+          "Overhead Cable Ext: 3 x 10–12 ⏳⚓🎗️",
+          "Hammer Preacher Curl: 3 x 8–10 ⏳⚓"
         ]
       }
     ]
@@ -458,7 +492,7 @@ const App: React.FC = () => {
             3: null, // Wednesday - rest
             4: 3,    // Thursday - Day 3 (Lower)
             5: 4,    // Friday - Day 4 (FB 1)
-            6: null  // Saturday - rest
+            6: 5     // Saturday - Day 5 (FB 2)
           };
           const todayWorkoutDay = dayMapping[dayOfWeek];
           const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
