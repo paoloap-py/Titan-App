@@ -48,6 +48,38 @@ import {
 import { getBodyHighlighterMuscles } from './muscleMapping';
 import * as gemini from './services/geminiService';
 
+// User bodyweight for bodyweight exercises
+const USER_BODYWEIGHT = 95;
+
+// Bodyweight exercises that should auto-fill with user's weight
+const BODYWEIGHT_EXERCISES = [
+  'Weighted Dips',
+  'Dips',
+  'Pull-ups',
+  'Chin-ups',
+  'Push-ups',
+  'Walking Lunges',
+  'BW Lunges',
+  'Cossack Squats'
+];
+
+// Helper to check if exercise is bodyweight-based
+const isBodyweightExercise = (name: string): boolean => {
+  return BODYWEIGHT_EXERCISES.some(bw => name.toLowerCase().includes(bw.toLowerCase()));
+};
+
+// Helper to parse target rep range and get max reps
+const parseMaxReps = (targetRepRange: string): number => {
+  const match = targetRepRange.match(/(\d+)(?:–|-)?(\d+)?/);
+  if (match) {
+    return parseInt(match[2] || match[1]) || 15;
+  }
+  return 15;
+};
+
+// Helper to calculate volume (weight × reps) for PR comparison
+const calculateVolume = (weight: number, reps: number): number => weight * reps;
+
 const DEFAULT_PROTOCOLS: Protocol[] = [
   {
     id: 'titan-133',
@@ -134,6 +166,7 @@ const App: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [aiInsight, setAiInsight] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   // Load persistence data on mount
   useEffect(() => {
@@ -154,12 +187,48 @@ const App: React.FC = () => {
 
   // Persistence logic
   useEffect(() => {
-    localStorage.setItem('titan_data', JSON.stringify({ 
-      sessions, 
-      alerts, 
-      currentSession 
+    localStorage.setItem('titan_data', JSON.stringify({
+      sessions,
+      alerts,
+      currentSession
     }));
   }, [sessions, alerts, currentSession]);
+
+  // Immediate save helper for set operations
+  const saveSessionNow = (updatedSession: WorkoutSession) => {
+    localStorage.setItem('titan_data', JSON.stringify({
+      sessions,
+      alerts,
+      currentSession: updatedSession
+    }));
+  };
+
+  // Get best previous volume for an exercise (for PR detection)
+  const getBestPreviousVolume = (exerciseName: string): number => {
+    let bestVolume = 0;
+    sessions.forEach(session => {
+      session.exercises.forEach(ex => {
+        if (ex.name.toLowerCase() === exerciseName.toLowerCase()) {
+          ex.sets.forEach(set => {
+            const volume = calculateVolume(set.weight, set.reps);
+            if (volume > bestVolume) bestVolume = volume;
+          });
+        }
+      });
+    });
+    return bestVolume;
+  };
+
+  // Get last session's data for an exercise (for auto-population)
+  const getLastSessionExercise = (exerciseName: string): ExerciseEntry | null => {
+    for (const session of sessions) {
+      const exercise = session.exercises.find(
+        ex => ex.name.toLowerCase() === exerciseName.toLowerCase()
+      );
+      if (exercise) return exercise;
+    }
+    return null;
+  };
 
   const handleStartSession = (dayNum: number) => {
     const protocol = DEFAULT_PROTOCOLS[0];
@@ -179,13 +248,34 @@ const App: React.FC = () => {
         const name = parts[0].trim();
         const config = parts[1]?.trim() || '';
         const plannedSetsCount = parseInt(config.split('x')[0]) || 3;
-        
+
+        const isBW = isBodyweightExercise(name);
+        const defaultWeight = isBW ? USER_BODYWEIGHT : 0;
+
+        // Get last session's data for this exercise
+        const lastExercise = getLastSessionExercise(name);
+
+        // Create sets with auto-populated data from last session
+        const sets = Array.from({ length: plannedSetsCount }, (_, setIdx) => {
+          // Try to get data from last session's corresponding set
+          const lastSet = lastExercise?.sets[setIdx];
+          if (lastSet && lastSet.weight > 0) {
+            return {
+              reps: lastSet.reps > 0 ? lastSet.reps : 0,
+              weight: lastSet.weight,
+              completed: false
+            };
+          }
+          // Fall back to default (bodyweight or 0)
+          return { reps: 0, weight: defaultWeight, completed: false };
+        });
+
         return {
           id: Math.random().toString(36).substr(2, 9),
           name,
           targetRepRange: config.split('x')[1]?.trim().split(' ')[0] || '8-10',
           plannedSets: plannedSetsCount,
-          sets: Array.from({ length: plannedSetsCount }, () => ({ reps: 0, weight: 0, completed: false })),
+          sets,
           requiresStraps: exName.includes('🎗️'),
           hasFinisherTarget: exName.includes('✋'),
           hasAnchorTarget: exName.includes('⚓'),
@@ -202,17 +292,34 @@ const App: React.FC = () => {
     if (!currentSession) return;
     const updatedExercises = currentSession.exercises.map(ex => {
       if (ex.id !== exId) return ex;
+
       const updatedSets = ex.sets.map((s, idx) => {
-        if (idx !== setIdx) return s;
-        const newSet = { ...s, [field]: value };
-        if (field === 'reps' && value > 0) {
-          newSet.completed = true;
+        if (idx === setIdx) {
+          // Update the target set
+          const newSet = { ...s, [field]: value };
+          if (field === 'reps' && value > 0) {
+            newSet.completed = true;
+          }
+          return newSet;
         }
-        return newSet;
+
+        // Auto-fill subsequent empty sets when first set is entered
+        if (setIdx === 0 && idx > 0 && (field === 'weight' || field === 'reps') && value > 0) {
+          const currentValue = field === 'weight' ? s.weight : s.reps;
+          // Only auto-fill if the set is still empty (0)
+          if (currentValue === 0) {
+            return { ...s, [field]: value };
+          }
+        }
+
+        return s;
       });
+
       return { ...ex, sets: updatedSets };
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const addSet = (exId: string) => {
@@ -226,7 +333,9 @@ const App: React.FC = () => {
         sets: [...ex.sets, { reps: 0, weight: newWeight, completed: false }]
       };
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const removeSet = (exId: string) => {
@@ -237,7 +346,9 @@ const App: React.FC = () => {
       }
       return ex;
     });
-    setCurrentSession({ ...currentSession, exercises: updatedExercises });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const handleFinishSession = async () => {
@@ -319,7 +430,24 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-4xl mx-auto p-4 md:p-6">
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && (() => {
+          // Determine today's workout based on day of week
+          // Mon=1, Tue=2, Thu=3, Fri=4, Wed/Sat/Sun=rest
+          const dayOfWeek = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+          const dayMapping: Record<number, number | null> = {
+            0: null, // Sunday - rest
+            1: 1,    // Monday - Day 1 (Upper 1)
+            2: 2,    // Tuesday - Day 2 (Upper 2)
+            3: null, // Wednesday - rest
+            4: 3,    // Thursday - Day 3 (Lower)
+            5: 4,    // Friday - Day 4 (FB 1)
+            6: null  // Saturday - rest
+          };
+          const todayWorkoutDay = dayMapping[dayOfWeek];
+          const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
+          const isRestDay = todayWorkoutDay === null;
+
+          return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -336,6 +464,48 @@ const App: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Today's Workout Section */}
+            <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
+              {isRestDay ? (
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Rest Day</h3>
+                  <p className="text-4xl">💤</p>
+                  <p className="text-sm text-slate-400 mt-2">Recovery is part of the protocol</p>
+                </div>
+              ) : todayProtocol && (
+                <>
+                  <button
+                    onClick={() => handleStartSession(todayProtocol.day)}
+                    className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
+                  >
+                    <div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
+                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-[#64748b]" />
+                  </button>
+                  <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
+                    {todayProtocol.exercises.map((exercise, idx) => {
+                      const parts = exercise.split(':');
+                      const name = parts[0].trim();
+                      const config = parts[1]?.trim() || '';
+                      return (
+                        <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
+                          <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-white font-bold">{name}</p>
+                            <p className="text-[#94a3b8] text-sm">{config}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             {currentSession && (
@@ -378,7 +548,8 @@ const App: React.FC = () => {
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {activeTab === 'session' && currentSession && (
           <div className="space-y-6 pb-24 animate-in slide-in-from-right-10 duration-500">
@@ -394,48 +565,67 @@ const App: React.FC = () => {
 
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
-                const isComplete = ex.sets.every(s => s.reps > 0);
+                const completedSetsCount = ex.sets.filter(s => s.completed && (s.reps > 0 || s.weight > 0)).length;
+                const isComplete = completedSetsCount >= ex.plannedSets;
+                const maxTargetReps = parseMaxReps(ex.targetRepRange);
+                const bestPreviousVolume = getBestPreviousVolume(ex.name);
+                const hasPR = ex.sets.some(set => set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume);
                 return (
-                  <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
+                  <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${hasPR ? 'border-yellow-500/50' : isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
                     <div className="p-6 border-b border-slate-800/50 flex justify-between items-start">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl font-black text-white uppercase italic tracking-tight">{ex.name}</h3>
-                          {isComplete && <Check className="w-5 h-5 text-green-500" />}
+                          {hasPR && <Trophy className="w-5 h-5 text-yellow-500" />}
+                          {isComplete && !hasPR && <Check className="w-5 h-5 text-green-500" />}
                         </div>
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">{ex.targetRepRange} Reps</span>
                           {ex.hasFinisherTarget && <span className="text-[10px] font-black bg-red-500/10 text-red-400 px-2 py-1 rounded-md uppercase">✋ Finisher</span>}
+                          {hasPR && <span className="text-[10px] font-black bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-md uppercase">🏆 New PR!</span>}
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="p-6 space-y-3">
-                      {ex.sets.map((set, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className={`w-10 h-10 flex items-center justify-center rounded-2xl text-xs font-black transition-colors ${set.completed ? 'bg-green-500 text-black shadow-lg shadow-green-900/40' : 'bg-slate-800 text-slate-500'}`}>{i+1}</div>
-                          <input 
-                            type="number" 
-                            placeholder="KG" 
-                            value={set.weight || ''} 
-                            onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
-                            className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all" 
-                          />
-                          <input 
-                            type="number" 
-                            placeholder="REPS" 
-                            value={set.reps || ''} 
-                            onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
-                            className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all" 
-                          />
-                          <button 
-                            onClick={() => updateSet(ex.id, i, 'completed', !set.completed)}
-                            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${set.completed ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}
-                          >
-                            <Check className="w-6 h-6" />
-                          </button>
-                        </div>
-                      ))}
+                      {ex.sets.map((set, i) => {
+                        const isTooLight = set.reps > maxTargetReps + 3 && set.weight > 0;
+                        const isPRSet = set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
+                        return (
+                          <div key={i}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 flex items-center justify-center rounded-2xl text-xs font-black transition-colors ${isPRSet ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-900/40' : set.completed ? 'bg-green-500 text-black shadow-lg shadow-green-900/40' : 'bg-slate-800 text-slate-500'}`}>
+                                {isPRSet ? <Trophy className="w-4 h-4" /> : i+1}
+                              </div>
+                              <input
+                                type="number"
+                                placeholder="KG"
+                                value={set.weight || ''}
+                                onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
+                                className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all"
+                              />
+                              <input
+                                type="number"
+                                placeholder="REPS"
+                                value={set.reps || ''}
+                                onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
+                                className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
+                              />
+                              <button
+                                onClick={() => updateSet(ex.id, i, 'completed', !set.completed)}
+                                className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${set.completed ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}
+                              >
+                                <Check className="w-6 h-6" />
+                              </button>
+                            </div>
+                            {isTooLight && (
+                              <div className="ml-13 mt-1 flex items-center gap-1 text-orange-400 text-[10px] font-black uppercase">
+                                <AlertTriangle className="w-3 h-3" /> Weight too light - increase load
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* NEW ACTION BAR */}
@@ -483,31 +673,70 @@ const App: React.FC = () => {
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center px-2">
               <h2 className="text-3xl font-black italic uppercase text-white">Titan Archives</h2>
-              <button onClick={exportCSV} className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-300 active:scale-95">
-                <Download size={14} /> Export CSV
-              </button>
-            </div>
-            {sessions.map(s => (
-              <div key={s.id} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex justify-between items-center group">
-                <div className="flex gap-5 items-center">
-                  <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-red-500 font-black italic text-xl">D{s.day}</div>
-                  <div>
-                    <h4 className="text-lg font-black text-white uppercase italic">{DEFAULT_PROTOCOLS[0].days.find(d => d.day === s.day)?.name}</h4>
-                    <p className="text-xs text-slate-500 font-bold mt-0.5">{new Date(s.date).toLocaleDateString()} • {s.exercises.length} Movements</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => {
-                    if (confirm("Permanently delete this session?")) {
-                      setSessions(prev => prev.filter(x => x.id !== s.id));
-                    }
-                  }} 
-                  className="text-slate-800 group-hover:text-red-500 p-2 transition-colors"
-                >
-                  <Trash2 size={20} />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-bold">{sessions.length} sessions</span>
+                <button onClick={exportCSV} className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-slate-300 active:scale-95">
+                  <Download size={14} /> Export CSV
                 </button>
               </div>
-            ))}
+            </div>
+            {sessions.map(s => {
+              const isExpanded = expandedSessionId === s.id;
+              const totalVolume = s.exercises.reduce((acc, ex) =>
+                acc + ex.sets.reduce((setAcc, set) => setAcc + (set.weight * set.reps), 0), 0
+              );
+              return (
+                <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+                  <div
+                    onClick={() => setExpandedSessionId(isExpanded ? null : s.id)}
+                    className="p-6 flex justify-between items-center cursor-pointer hover:bg-slate-800/30 transition-colors"
+                  >
+                    <div className="flex gap-5 items-center">
+                      <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-red-500 font-black italic text-xl">D{s.day}</div>
+                      <div>
+                        <h4 className="text-lg font-black text-white uppercase italic">{DEFAULT_PROTOCOLS[0].days.find(d => d.day === s.day)?.name}</h4>
+                        <p className="text-xs text-slate-500 font-bold mt-0.5">{new Date(s.date).toLocaleDateString()} • {s.exercises.length} Movements • {totalVolume.toLocaleString()}kg</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ChevronRight className={`w-5 h-5 text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm("Permanently delete this session?")) {
+                            setSessions(prev => prev.filter(x => x.id !== s.id));
+                          }
+                        }}
+                        className="text-slate-800 hover:text-red-500 p-2 transition-colors"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className="border-t border-slate-800 p-6 space-y-4 bg-slate-950/50">
+                      {s.exercises.map((ex, exIdx) => (
+                        <div key={exIdx} className="bg-slate-900/50 rounded-2xl p-4">
+                          <h5 className="text-sm font-black text-white uppercase mb-3">{ex.name}</h5>
+                          <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-black uppercase text-slate-600 mb-2">
+                            <span>Set</span>
+                            <span>Weight</span>
+                            <span>Reps</span>
+                          </div>
+                          {ex.sets.map((set, setIdx) => (
+                            <div key={setIdx} className="grid grid-cols-3 gap-2 text-center py-1">
+                              <span className="text-slate-500 font-bold">{setIdx + 1}</span>
+                              <span className="text-white font-black">{set.weight}kg</span>
+                              <span className="text-white font-black">{set.reps}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {sessions.length === 0 && (
               <div className="p-16 text-center border-2 border-dashed border-slate-800 rounded-[3rem]">
                 <Activity className="w-12 h-12 text-slate-800 mx-auto mb-4" />

@@ -3,7 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { WorkoutSession, Alert } from "../types";
 
 // Always initialize with a named parameter for the API key.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Vite uses import.meta.env for environment variables
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
 
 /**
  * Analyzes a TITAN 133 workout session using Gemini 3 Flash.
