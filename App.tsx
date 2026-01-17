@@ -534,8 +534,8 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Today's Workout Section - only show on training days */}
-            {!isRestDay && todayProtocol && (
+            {/* Today's Workout Section - only show on training days AND when no active session */}
+            {!isRestDay && todayProtocol && !currentSession && (
               <button
                 onClick={() => handleStartSession(todayProtocol.day)}
                 className="w-full bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex justify-between items-center shadow-2xl hover:bg-red-700 active:scale-95 transition-all"
