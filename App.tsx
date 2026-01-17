@@ -257,6 +257,38 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentSession?.id]);
 
+  // Play alarm sound using Web Audio API
+  const playAlarmSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      // Play 3 beeps
+      const playBeep = (startTime: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 880; // A5 note
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.5, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.3);
+      };
+
+      const now = audioContext.currentTime;
+      playBeep(now);
+      playBeep(now + 0.4);
+      playBeep(now + 0.8);
+    } catch (e) {
+      console.log('Audio not supported');
+    }
+  };
+
   // Rest timer countdown effect - uses end timestamp to work when app is backgrounded
   useEffect(() => {
     if (!restTimerEndTime) {
@@ -269,8 +301,10 @@ const App: React.FC = () => {
       if (remaining <= 0) {
         setRestTimer(0);
         setRestTimerEndTime(null);
-        // Vibrate when timer ends (if supported)
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        // Play alarm, vibrate, and show notification when timer ends
+        playAlarmSound();
+        showTimerNotification();
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
       } else {
         setRestTimer(remaining);
       }
@@ -293,10 +327,27 @@ const App: React.FC = () => {
     };
   }, [restTimerEndTime]);
 
+  // Show notification when timer ends
+  const showTimerNotification = () => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Rest Complete!', {
+        body: 'Time to start your next set',
+        icon: '/icon-192.png',
+        tag: 'rest-timer',
+        requireInteraction: true
+      });
+    }
+  };
+
   // Start rest timer with duration based on exercise type
   const startRestTimer = (isLongRest: boolean) => {
     const duration = isLongRest ? 180 : 90; // 3:00 or 1:30
     setRestTimerEndTime(Date.now() + duration * 1000);
+
+    // Request notification permission on first timer start
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   };
 
   // Format seconds to MM:SS or MMM:SS
