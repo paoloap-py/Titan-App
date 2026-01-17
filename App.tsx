@@ -308,34 +308,20 @@ const App: React.FC = () => {
     setCurrentSession(updatedSession);
   };
 
-  // Auto-fill subsequent sets when user finishes typing in first set (onBlur)
-  const handleFirstSetBlur = (exId: string, field: 'reps' | 'weight', value: number) => {
+  // Auto-fill subsequent sets when user finishes typing (onBlur)
+  // Works from any row - fills all subsequent rows that are still 0
+  const handleSetBlur = (exId: string, setIdx: number, field: 'reps' | 'weight', value: number) => {
     if (!currentSession || value <= 0) return;
 
     const updatedExercises = currentSession.exercises.map(ex => {
       if (ex.id !== exId) return ex;
 
-      const firstSetValue = field === 'weight' ? ex.sets[0]?.weight : ex.sets[0]?.reps;
-
-      const updatedSets = ex.sets.map((s, idx) => {
-        if (idx === 0) return s; // Skip first set, already updated
-
-        const currentValue = field === 'weight' ? s.weight : s.reps;
-        // Auto-fill if set is empty (0) or has the same value as the original prefill
-        // This allows updating sets that were auto-filled but not manually changed
-        if (currentValue === 0 || currentValue !== firstSetValue) {
-          return s; // Don't update if manually changed to different value
-        }
-        // Update sets that match the first set's value (synced sets)
-        return s;
-      });
-
-      // Simpler approach: fill all sets that are still 0 with first set value
+      // Fill all subsequent sets that are still 0 with this set's value
       const finalSets = ex.sets.map((s, idx) => {
-        if (idx === 0) return s;
+        if (idx <= setIdx) return s; // Skip current and previous sets
         const currentValue = field === 'weight' ? s.weight : s.reps;
         if (currentValue === 0) {
-          return { ...s, [field]: firstSetValue };
+          return { ...s, [field]: value };
         }
         return s;
       });
@@ -346,6 +332,11 @@ const App: React.FC = () => {
     const updatedSession = { ...currentSession, exercises: updatedExercises };
     saveSessionNow(updatedSession);
     setCurrentSession(updatedSession);
+  };
+
+  // Select all text when input is focused
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
   };
 
   const addSet = (exId: string) => {
@@ -492,47 +483,39 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Today's Workout Section */}
-            <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
-              {isRestDay ? (
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Rest Day</h3>
-                  <p className="text-4xl">💤</p>
-                  <p className="text-sm text-slate-400 mt-2">Recovery is part of the protocol</p>
-                </div>
-              ) : todayProtocol && (
-                <>
-                  <button
-                    onClick={() => handleStartSession(todayProtocol.day)}
-                    className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
-                  >
-                    <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
-                    </div>
-                    <ChevronRight className="w-6 h-6 text-[#64748b]" />
-                  </button>
-                  <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
-                    {todayProtocol.exercises.map((exercise, idx) => {
-                      const parts = exercise.split(':');
-                      const name = parts[0].trim();
-                      const config = parts[1]?.trim() || '';
-                      return (
-                        <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
-                          <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
-                            {idx + 1}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white font-bold">{name}</p>
-                            <p className="text-[#94a3b8] text-sm">{config}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+            {/* Today's Workout Section - only show on training days */}
+            {!isRestDay && todayProtocol && (
+              <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
+                <button
+                  onClick={() => handleStartSession(todayProtocol.day)}
+                  className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
+                >
+                  <div>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
                   </div>
-                </>
-              )}
-            </div>
+                  <ChevronRight className="w-6 h-6 text-[#64748b]" />
+                </button>
+                <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
+                  {todayProtocol.exercises.map((exercise, idx) => {
+                    const parts = exercise.split(':');
+                    const name = parts[0].trim();
+                    const config = parts[1]?.trim() || '';
+                    return (
+                      <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
+                        <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-bold">{name}</p>
+                          <p className="text-[#94a3b8] text-sm">{config}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {currentSession && (
               <div className="bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-center justify-between shadow-2xl animate-pulse">
@@ -563,14 +546,33 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {DEFAULT_PROTOCOLS[0].days.map(day => (
-                <button key={day.day} onClick={() => handleStartSession(day.day)} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left hover:border-red-600/50 transition-all active:scale-95 shadow-xl">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
-                    <ChevronRight className="w-5 h-5 text-slate-700" />
+                <div key={day.day} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-red-600/50 transition-all shadow-xl">
+                  <button
+                    onClick={() => handleStartSession(day.day)}
+                    className="w-full p-6 text-left active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
+                      <ChevronRight className="w-5 h-5 text-slate-700" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
+                    <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements • {day.targetDuration} min</p>
+                  </button>
+                  <div className="border-t border-slate-800 px-4 py-3 space-y-2 max-h-48 overflow-y-auto">
+                    {day.exercises.map((exercise, idx) => {
+                      const parts = exercise.split(':');
+                      const name = parts[0].trim();
+                      const config = parts[1]?.trim() || '';
+                      return (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <span className="text-slate-600 font-bold w-5">{idx + 1}.</span>
+                          <span className="text-slate-300 font-medium">{name}</span>
+                          <span className="text-slate-500 text-xs ml-auto">{config}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements</p>
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -628,7 +630,8 @@ const App: React.FC = () => {
                                 placeholder="KG"
                                 value={set.weight || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
-                                onBlur={(e) => i === 0 && handleFirstSetBlur(ex.id, 'weight', parseFloat(e.target.value) || 0)}
+                                onBlur={(e) => handleSetBlur(ex.id, i, 'weight', parseFloat(e.target.value) || 0)}
+                                onFocus={handleInputFocus}
                                 className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all"
                               />
                               <input
@@ -636,7 +639,8 @@ const App: React.FC = () => {
                                 placeholder="REPS"
                                 value={set.reps || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
-                                onBlur={(e) => i === 0 && handleFirstSetBlur(ex.id, 'reps', parseInt(e.target.value) || 0)}
+                                onBlur={(e) => handleSetBlur(ex.id, i, 'reps', parseInt(e.target.value) || 0)}
+                                onFocus={handleInputFocus}
                                 className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
