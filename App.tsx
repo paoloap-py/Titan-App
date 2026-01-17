@@ -231,6 +231,63 @@ const App: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Timer effect - updates elapsed time every second when session is active
+  useEffect(() => {
+    if (!currentSession) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    // Calculate initial elapsed time from session start
+    const startTime = new Date(currentSession.date).getTime();
+    const updateElapsed = () => {
+      const now = Date.now();
+      setElapsedSeconds(Math.floor((now - startTime) / 1000));
+    };
+
+    updateElapsed(); // Initial update
+    const interval = setInterval(updateElapsed, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentSession?.id]);
+
+  // Format seconds to MM:SS or MMM:SS
+  const formatTime = (totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Get target duration in seconds for current session
+  const getTargetDuration = (): number => {
+    if (!currentSession) return 0;
+    const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+    return (day?.targetDuration || 90) * 60; // Convert minutes to seconds
+  };
+
+  // Calculate projected time based on progress
+  const getProjectedTime = (): number | null => {
+    if (!currentSession) return null;
+
+    const completedExercises = currentSession.exercises.filter(ex =>
+      ex.sets.every(set => set.reps > 0)
+    ).length;
+    const totalExercises = currentSession.exercises.length;
+
+    if (completedExercises === 0) return null;
+
+    return Math.round(elapsedSeconds * (totalExercises / completedExercises));
+  };
+
+  // Get color for projected time
+  const getProjectedColor = (projected: number | null, target: number): string => {
+    if (projected === null) return '#94a3b8';
+    if (projected <= target) return '#22c55e'; // Green - ahead
+    if (projected <= target * 1.1) return '#3b82f6'; // Blue - on pace
+    return '#dc2626'; // Red - behind
+  };
 
   // Load persistence data on mount
   useEffect(() => {
@@ -708,19 +765,45 @@ const App: React.FC = () => {
                   </button>
                 );
               })}
-              {currentSession && (
-                <div className="p-6 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse">
-                  <div className="flex justify-between items-center mb-1">
+              {currentSession && (() => {
+                const targetSeconds = getTargetDuration();
+                const progress = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
+                return (
+                <div className="p-6 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse relative overflow-hidden">
+                  {/* Circular Timer - positioned on right */}
+                  <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-24 h-24">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <circle
+                        cx="18" cy="18" r="15.5"
+                        fill="#1a1a2e"
+                        stroke="#374151"
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx="18" cy="18" r="15.5"
+                        fill="none"
+                        stroke="#dc2626"
+                        strokeWidth="2.5"
+                        strokeDasharray={`${progress} 100`}
+                        strokeLinecap="round"
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(220, 38, 38, 0.6))' }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-black text-white font-mono">{formatTime(elapsedSeconds)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mb-1 pr-20">
                     <span className="text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider bg-orange-600 text-white">
                       Active
                     </span>
-                    <Activity className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">
+                  <h3 className="text-2xl font-black text-white italic uppercase mt-3 pr-20">
                     {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
                   </h3>
-                  <p className="text-sm mt-1 text-orange-100">{currentSession.exercises.length} Movements • In Progress</p>
-                  <div className="flex gap-2 mt-4">
+                  <p className="text-sm mt-1 text-orange-100 pr-20">{currentSession.exercises.length} Movements • In Progress</p>
+                  <div className="flex gap-2 mt-4 pr-20">
                     <button
                       onClick={() => setActiveTab('session')}
                       className="flex-1 bg-white text-orange-600 px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
@@ -740,7 +823,8 @@ const App: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
           );
@@ -757,6 +841,44 @@ const App: React.FC = () => {
               </div>
               <button onClick={() => setActiveTab('dashboard')} className="p-3 bg-slate-800 rounded-xl text-slate-400"><X className="w-5 h-5" /></button>
             </div>
+
+            {/* Time Stats Panel */}
+            {(() => {
+              const targetSeconds = getTargetDuration();
+              const projected = getProjectedTime();
+              const projectedColor = getProjectedColor(projected, targetSeconds);
+              const progressPercent = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
+              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              const targetMinutes = day?.targetDuration || 90;
+
+              return (
+                <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-3xl shadow-2xl">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Elapsed</span>
+                      <span className="text-xl font-black text-[#dc2626] font-mono">{formatTime(elapsedSeconds)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Projected</span>
+                      <span className="text-xl font-black font-mono" style={{ color: projectedColor }}>
+                        {projected !== null ? formatTime(projected) : '--:--'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Target</span>
+                      <span className="text-xl font-black text-[#94a3b8] font-mono">{targetMinutes}:00</span>
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="mt-4 h-2 bg-[#1e293b] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#dc2626] rounded-full transition-all duration-500"
+                      style={{ width: `${progressPercent}%`, boxShadow: '0 0 8px rgba(220, 38, 38, 0.5)' }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
