@@ -546,33 +546,18 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {DEFAULT_PROTOCOLS[0].days.map(day => (
-                <div key={day.day} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-red-600/50 transition-all shadow-xl">
-                  <button
-                    onClick={() => handleStartSession(day.day)}
-                    className="w-full p-6 text-left active:scale-[0.98] transition-all"
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
-                      <ChevronRight className="w-5 h-5 text-slate-700" />
-                    </div>
-                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
-                    <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements • {day.targetDuration} min</p>
-                  </button>
-                  <div className="border-t border-slate-800 px-4 py-3 space-y-2 max-h-48 overflow-y-auto">
-                    {day.exercises.map((exercise, idx) => {
-                      const parts = exercise.split(':');
-                      const name = parts[0].trim();
-                      const config = parts[1]?.trim() || '';
-                      return (
-                        <div key={idx} className="flex items-center gap-2 text-sm">
-                          <span className="text-slate-600 font-bold w-5">{idx + 1}.</span>
-                          <span className="text-slate-300 font-medium">{name}</span>
-                          <span className="text-slate-500 text-xs ml-auto">{config}</span>
-                        </div>
-                      );
-                    })}
+                <button
+                  key={day.day}
+                  onClick={() => handleStartSession(day.day)}
+                  className="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left hover:border-red-600/50 transition-all active:scale-95 shadow-xl"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
+                    <ChevronRight className="w-5 h-5 text-slate-700" />
                   </div>
-                </div>
+                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
+                  <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements • {day.targetDuration} min</p>
+                </button>
               ))}
             </div>
           </div>
