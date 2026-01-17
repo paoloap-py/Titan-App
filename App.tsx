@@ -654,52 +654,37 @@ const App: React.FC = () => {
             </div>
 
             {/* Active Session Card - shown when workout in progress */}
-            {currentSession && (() => {
-              const targetSeconds = getTargetDuration();
-              const progress = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
-              return (
-                <div className="p-5 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse relative overflow-hidden">
-                  <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-20 h-20">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.5" fill="#1a1a2e" stroke="#374151" strokeWidth="2" />
-                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="#dc2626" strokeWidth="2.5"
-                        strokeDasharray={`${progress} 100`} strokeLinecap="round"
-                        style={{ filter: 'drop-shadow(0 0 4px rgba(220, 38, 38, 0.6))' }} />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-[10px] font-black text-white font-mono">{formatTime(elapsedSeconds)}</span>
-                    </div>
+            {currentSession && (
+              <div className="p-5 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider bg-orange-600 text-white">Active</span>
+                    <h3 className="text-xl font-black text-white italic uppercase mt-1">
+                      {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
+                    </h3>
                   </div>
-                  <div className="flex items-center gap-3 pr-16">
-                    <div className="flex-1">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider bg-orange-600 text-white">Active</span>
-                      <h3 className="text-xl font-black text-white italic uppercase mt-1">
-                        {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
-                      </h3>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setActiveTab('session')}
-                        className="bg-white text-orange-600 px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center gap-1 active:scale-95 transition-all"
-                      >
-                        <Play className="w-3 h-3 fill-current" /> Resume
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm('Delete this active session?')) {
-                            setCurrentSession(null);
-                          }
-                        }}
-                        className="bg-orange-600 text-white px-2 py-2 rounded-xl active:scale-95 transition-all hover:bg-orange-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Delete this active session?')) {
+                          setCurrentSession(null);
+                        }
+                      }}
+                      className="bg-orange-600 text-white px-2 py-2 rounded-xl active:scale-95 transition-all hover:bg-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('session')}
+                      className="bg-white text-orange-600 px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center gap-1 active:scale-95 transition-all"
+                    >
+                      <Play className="w-3 h-3 fill-current" /> Resume
+                    </button>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            )}
 
             {/* Weekly Muscle Volume + Progress Tracker Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
