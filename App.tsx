@@ -564,11 +564,15 @@ const App: React.FC = () => {
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400', blink: false },
-                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500', blink: false },
-                { label: 'Today', val: isRestDay ? 'Rest' : todayProtocol?.name || '-', icon: Zap, color: 'text-red-500', blink: !isRestDay },
+                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400', blink: false, clickable: false },
+                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500', blink: false, clickable: false },
+                { label: 'Today', val: isRestDay ? 'Rest' : todayProtocol?.name || '-', icon: Zap, color: 'text-red-500', blink: !isRestDay, clickable: !isRestDay && todayWorkoutDay !== null },
               ].map((kpi, i) => (
-                <div key={i} className={`bg-slate-900 border p-5 rounded-3xl ${kpi.blink ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
+                <div
+                  key={i}
+                  onClick={() => kpi.clickable && todayWorkoutDay && handleStartSession(todayWorkoutDay)}
+                  className={`bg-slate-900 border p-5 rounded-3xl ${kpi.blink ? 'border-red-500 animate-pulse' : 'border-slate-800'} ${kpi.clickable ? 'cursor-pointer hover:border-red-400 active:scale-95 transition-all' : ''}`}
+                >
                   <kpi.icon className={`w-4 h-4 mb-2 ${kpi.color}`} />
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{kpi.label}</p>
                   <div className="flex items-baseline gap-1 mt-1">
