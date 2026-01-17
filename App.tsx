@@ -409,7 +409,7 @@ const App: React.FC = () => {
 
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
-                const completedSetsCount = ex.sets.filter(s => s.completed).length;
+                const completedSetsCount = ex.sets.filter(s => s.completed && (s.reps > 0 || s.weight > 0)).length;
                 const isComplete = completedSetsCount >= ex.plannedSets;
                 return (
                   <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
