@@ -255,13 +255,13 @@ const App: React.FC = () => {
         // Get last session's data for this exercise
         const lastExercise = getLastSessionExercise(name);
 
-        // Create sets with auto-populated data from last session's FIRST set
+        // Create sets with auto-populated WEIGHT from last session's FIRST set
+        // Reps are left at 0 so user can enter them and trigger auto-fill
         const lastFirstSet = lastExercise?.sets[0];
         const prefilledWeight = lastFirstSet && lastFirstSet.weight > 0 ? lastFirstSet.weight : defaultWeight;
-        const prefilledReps = lastFirstSet && lastFirstSet.reps > 0 ? lastFirstSet.reps : 0;
 
         const sets = Array.from({ length: plannedSetsCount }, () => ({
-          reps: prefilledReps,
+          reps: 0,
           weight: prefilledWeight,
           completed: false
         }));
