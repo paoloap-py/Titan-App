@@ -806,6 +806,24 @@ const App: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Backup/Restore Section */}
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-3">Data Backup</h3>
+              <div className="flex gap-3">
+                <button
+                  onClick={exportBackup}
+                  className="flex-1 bg-slate-800 text-white px-4 py-3 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700"
+                >
+                  <Download className="w-4 h-4" /> Export JSON
+                </button>
+                <label className="flex-1 bg-slate-800 text-white px-4 py-3 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all hover:bg-slate-700">
+                  <FileUp className="w-4 h-4" /> Import JSON
+                  <input type="file" accept=".json" onChange={importBackup} className="hidden" />
+                </label>
+              </div>
+              <p className="text-[10px] text-slate-600 mt-2 text-center">Export to backup, then upload to Drive/GitHub</p>
+            </div>
           </div>
           );
         })()}
