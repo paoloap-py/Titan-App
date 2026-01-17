@@ -565,7 +565,7 @@ const App: React.FC = () => {
             <div className="grid grid-cols-3 gap-4">
               {[
                 { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500' },
-                { label: 'All Time', val: sessions.length, icon: Activity, color: 'text-green-400' },
+                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400' },
                 { label: 'Protocol', val: 'T-133', icon: Database, color: 'text-blue-400' },
               ].map((kpi, i) => (
                 <div key={i} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl">
@@ -615,6 +615,58 @@ const App: React.FC = () => {
                     <p className="text-xs font-bold text-slate-500">{period.days}/{period.target}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Weekly Muscle Volume Radar Chart */}
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2">Weekly Muscle Volume</h3>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 30, right: 50, bottom: 30, left: 50 }}>
+                    <PolarGrid stroke="#1e293b" />
+                    <PolarAngleAxis
+                      dataKey="muscle"
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 25]}
+                      tick={{ fill: '#64748b', fontSize: 8 }}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                      labelStyle={{ color: '#fff', fontWeight: 700, textTransform: 'uppercase' }}
+                      formatter={(value: number, name: string) => [
+                        `${value} sets`,
+                        name === 'current' ? 'Current' : 'Target'
+                      ]}
+                    />
+                    <Radar
+                      name="target"
+                      dataKey="target"
+                      stroke="#64748b"
+                      fill="#374151"
+                      fillOpacity={0.3}
+                      strokeDasharray="4 4"
+                      strokeWidth={2}
+                    />
+                    <Radar
+                      name="current"
+                      dataKey="current"
+                      stroke="#dc2626"
+                      fill="#dc2626"
+                      fillOpacity={0.5}
+                      strokeWidth={2}
+                      style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
+                    />
+                    <Legend
+                      wrapperStyle={{ paddingTop: 10 }}
+                      formatter={(value) => <span className="text-xs font-black text-slate-400 uppercase">{value}</span>}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -681,58 +733,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Weekly Muscle Volume Radar Chart */}
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
-              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2">Weekly Muscle Volume</h3>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 30, right: 50, bottom: 30, left: 50 }}>
-                    <PolarGrid stroke="#1e293b" />
-                    <PolarAngleAxis
-                      dataKey="muscle"
-                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
-                    />
-                    <PolarRadiusAxis
-                      angle={90}
-                      domain={[0, 25]}
-                      tick={{ fill: '#64748b', fontSize: 8 }}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                      labelStyle={{ color: '#fff', fontWeight: 700, textTransform: 'uppercase' }}
-                      formatter={(value: number, name: string) => [
-                        `${value} sets`,
-                        name === 'current' ? 'Current' : 'Target'
-                      ]}
-                    />
-                    <Radar
-                      name="target"
-                      dataKey="target"
-                      stroke="#64748b"
-                      fill="#374151"
-                      fillOpacity={0.3}
-                      strokeDasharray="4 4"
-                      strokeWidth={2}
-                    />
-                    <Radar
-                      name="current"
-                      dataKey="current"
-                      stroke="#dc2626"
-                      fill="#dc2626"
-                      fillOpacity={0.5}
-                      strokeWidth={2}
-                      style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: 10 }}
-                      formatter={(value) => <span className="text-xs font-black text-slate-400 uppercase">{value}</span>}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
             </div>
           </div>
           );
