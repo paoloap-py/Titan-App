@@ -1147,6 +1147,24 @@ const App: React.FC = () => {
                     <FileUp className="group-hover:text-red-500 transition-colors" />
                     <input type="file" accept=".json" onChange={importBackup} className="hidden" />
                   </label>
+                  <button
+                    onClick={() => {
+                      const data = localStorage.getItem('titan_data');
+                      if (data) {
+                        const parsed = JSON.parse(data);
+                        alert(`Sessions: ${parsed.sessions?.length || 0}\nAlerts: ${parsed.alerts?.length || 0}\nActive Session: ${parsed.currentSession ? 'Yes' : 'No'}\n\nRaw size: ${(data.length / 1024).toFixed(1)} KB`);
+                      } else {
+                        alert('No data in localStorage');
+                      }
+                    }}
+                    className="bg-slate-800 p-6 rounded-3xl text-left flex items-center justify-between group active:scale-95 transition-all"
+                  >
+                    <div>
+                      <span className="block font-black uppercase tracking-tight">View Storage</span>
+                      <span className="block text-[10px] text-slate-500 mt-1 uppercase">Debug: Show localStorage stats</span>
+                    </div>
+                    <Activity className="group-hover:text-red-500 transition-colors" />
+                  </button>
                 </div>
               </div>
 
