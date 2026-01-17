@@ -14,14 +14,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
   },
   "include": [
     "index.tsx",
     "App.tsx",
     "types.ts",
     "muscleMapping.ts",
-    "services/**/*.ts"
+    "services/**/*.ts",
+    "vite-env.d.ts"
   ],
   "exclude": [
     "node_modules",
