@@ -577,20 +577,29 @@ const App: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEFAULT_PROTOCOLS[0].days.map(day => (
-                <button
-                  key={day.day}
-                  onClick={() => handleStartSession(day.day)}
-                  className="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left hover:border-red-600/50 transition-all active:scale-95 shadow-xl"
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
-                    <ChevronRight className="w-5 h-5 text-slate-700" />
-                  </div>
-                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements • {day.targetDuration} min</p>
-                </button>
-              ))}
+              {DEFAULT_PROTOCOLS[0].days.map(day => {
+                const isToday = day.day === todayWorkoutDay;
+                return (
+                  <button
+                    key={day.day}
+                    onClick={() => handleStartSession(day.day)}
+                    className={`p-6 rounded-3xl text-left transition-all active:scale-95 shadow-xl ${
+                      isToday
+                        ? 'bg-red-600 border border-red-400 hover:bg-red-700'
+                        : 'bg-slate-900 border border-slate-800 hover:border-red-600/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider ${
+                        isToday ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
+                      }`}>Day {day.day}</span>
+                      <ChevronRight className={`w-5 h-5 ${isToday ? 'text-white' : 'text-slate-700'}`} />
+                    </div>
+                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
+                    <p className={`text-sm mt-1 ${isToday ? 'text-red-100' : 'text-slate-500'}`}>{day.exercises.length} Movements • {day.targetDuration} min</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
           );
