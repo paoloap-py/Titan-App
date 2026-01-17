@@ -77,6 +77,15 @@ const parseMaxReps = (targetRepRange: string): number => {
   return 15;
 };
 
+// Helper to parse target rep range and get min reps (for auto-population)
+const parseMinReps = (targetRepRange: string): number => {
+  const match = targetRepRange.match(/(\d+)(?:–|-)?(\d+)?/);
+  if (match) {
+    return parseInt(match[1]) || 10;
+  }
+  return 10;
+};
+
 // Helper to calculate volume (weight × reps) for PR comparison
 const calculateVolume = (weight: number, reps: number): number => weight * reps;
 
@@ -287,6 +296,7 @@ const App: React.FC = () => {
         const name = parts[0].trim();
         const config = parts[1]?.trim() || '';
         const plannedSetsCount = parseInt(config.split('x')[0]) || 3;
+        const targetRepRange = config.split('x')[1]?.trim().split(' ')[0] || '8-10';
 
         const isBW = isBodyweightExercise(name);
         const defaultWeight = isBW ? USER_BODYWEIGHT : 0;
@@ -294,13 +304,15 @@ const App: React.FC = () => {
         // Get last session's data for this exercise
         const lastExercise = getLastSessionExercise(name);
 
-        // Create sets with auto-populated WEIGHT from last session's FIRST set
-        // Reps are left at 0 so user can enter them and trigger auto-fill
+        // Create sets with auto-populated weight and reps
+        // Weight: from last session's first set, or bodyweight if applicable
+        // Reps: minimum of target rep range (e.g., 10 for "10-12")
         const lastFirstSet = lastExercise?.sets[0];
         const prefilledWeight = lastFirstSet && lastFirstSet.weight > 0 ? lastFirstSet.weight : defaultWeight;
+        const prefilledReps = parseMinReps(targetRepRange);
 
         const sets = Array.from({ length: plannedSetsCount }, () => ({
-          reps: 0,
+          reps: prefilledReps,
           weight: prefilledWeight,
           completed: false
         }));
