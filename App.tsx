@@ -232,6 +232,7 @@ const App: React.FC = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timerExpanded, setTimerExpanded] = useState(false);
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -841,44 +842,6 @@ const App: React.FC = () => {
               <button onClick={() => setActiveTab('dashboard')} className="p-3 bg-slate-800 rounded-xl text-slate-400"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Time Stats Panel */}
-            {(() => {
-              const targetSeconds = getTargetDuration();
-              const projected = getProjectedTime();
-              const projectedColor = getProjectedColor(projected, targetSeconds);
-              const progressPercent = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
-              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
-              const targetMinutes = day?.targetDuration || 90;
-
-              return (
-                <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-3xl shadow-2xl">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Elapsed</span>
-                      <span className="text-xl font-black text-[#dc2626] font-mono">{formatTime(elapsedSeconds)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Projected</span>
-                      <span className="text-xl font-black font-mono" style={{ color: projectedColor }}>
-                        {projected !== null ? formatTime(projected) : '--:--'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Target</span>
-                      <span className="text-xl font-black text-[#94a3b8] font-mono">{targetMinutes}:00</span>
-                    </div>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="mt-4 h-2 bg-[#1e293b] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#dc2626] rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercent}%`, boxShadow: '0 0 8px rgba(220, 38, 38, 0.5)' }}
-                    />
-                  </div>
-                </div>
-              );
-            })()}
-
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
                 const completedSetsCount = ex.sets.filter(s => s.completed && (s.reps > 0 || s.weight > 0)).length;
@@ -986,6 +949,89 @@ const App: React.FC = () => {
                 {loadingAi ? 'Titan AI Analyzing...' : 'Commit Session'}
               </button>
             </div>
+
+            {/* Floating Circular Timer Button */}
+            {(() => {
+              const targetSeconds = getTargetDuration();
+              const projected = getProjectedTime();
+              const projectedColor = getProjectedColor(projected, targetSeconds);
+              const progressPercent = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
+              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              const targetMinutes = day?.targetDuration || 90;
+              const circumference = 2 * Math.PI * 30; // r=30
+              const offset = circumference * (1 - (elapsedSeconds / targetSeconds));
+
+              return (
+                <>
+                  {/* Backdrop when expanded */}
+                  {timerExpanded && (
+                    <div
+                      className="fixed inset-0 bg-black/60 z-40"
+                      onClick={() => setTimerExpanded(false)}
+                    />
+                  )}
+
+                  {/* Expanded Stats Panel */}
+                  {timerExpanded && (
+                    <div className="fixed bottom-[180px] right-6 z-50 bg-[#0f172a] border border-slate-700 rounded-3xl p-5 shadow-2xl w-64 animate-in slide-in-from-bottom-4 duration-200">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Elapsed</span>
+                          <span className="text-xl font-black text-[#dc2626] font-mono">{formatTime(elapsedSeconds)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Projected</span>
+                          <span className="text-xl font-black font-mono" style={{ color: projectedColor }}>
+                            {projected !== null ? formatTime(projected) : '--:--'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-[#64748b] uppercase tracking-widest">Target</span>
+                          <span className="text-xl font-black text-[#94a3b8] font-mono">{targetMinutes}:00</span>
+                        </div>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="mt-4 h-2 bg-[#1e293b] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#dc2626] rounded-full transition-all duration-500"
+                          style={{ width: `${progressPercent}%`, boxShadow: '0 0 8px rgba(220, 38, 38, 0.5)' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Floating Timer Circle */}
+                  <button
+                    onClick={() => setTimerExpanded(!timerExpanded)}
+                    className="fixed bottom-[100px] right-6 z-50 w-[70px] h-[70px] rounded-full bg-[#0f172a] shadow-2xl flex items-center justify-center active:scale-95 transition-transform"
+                    style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)' }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 70 70">
+                      {/* Track circle */}
+                      <circle
+                        cx="35" cy="35" r="30"
+                        fill="none"
+                        stroke="#1e293b"
+                        strokeWidth="4"
+                      />
+                      {/* Progress circle */}
+                      <circle
+                        cx="35" cy="35" r="30"
+                        fill="none"
+                        stroke="#dc2626"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={Math.max(0, offset)}
+                        className="transition-all duration-1000"
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(220, 38, 38, 0.6))' }}
+                      />
+                    </svg>
+                    <span className="text-xs font-black text-white font-mono z-10">{formatTime(elapsedSeconds)}</span>
+                  </button>
+                </>
+              );
+            })()}
           </div>
         )}
 
