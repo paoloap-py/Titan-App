@@ -129,8 +129,8 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
         day: 1,
         name: "Upper #1",
         targetDuration: 95,
-        warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns"],
-        stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)"],
+        warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns", "Cat-Cow"],
+        stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)", "Child's Pose (60s)"],
         exercises: [
           "Meadows Row: 3 x 8–10 🎗️✋⚓⏱️",
           "Machine Chest Press: 3 x 8–10 ✋⚓⏱️",
@@ -148,8 +148,8 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
         day: 2,
         name: "Upper #2",
         targetDuration: 90,
-        warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations"],
-        stretching: ["Cross-Body Shoulder Stretch", "Child's Pose"],
+        warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations", "Light Banded Curls"],
+        stretching: ["Cross-Body Shoulder Stretch (60s)", "Child's Pose (60s)", "Puppy Pose (60s)"],
         exercises: [
           "Chest-Supported Dual-Cable Row: 3 x 10–12 🎗️✋⚓⏱️",
           "One-Arm Cable Pulldown: 3 x 10–12 🎗️⏱️",
@@ -166,8 +166,8 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
         day: 3,
         name: "Lower",
         targetDuration: 92,
-        warmup: ["Leg Swings", "BW Lunges", "Cossack Squats"],
-        stretching: ["Pigeon Pose", "Couch Stretch"],
+        warmup: ["Leg Swings", "BW Lunges", "Cossack Squats", "Glute Bridges"],
+        stretching: ["Pigeon Pose (60s)", "Couch Stretch (60s)", "Calf Stretch (60s)"],
         exercises: [
           "Hack Squat: 3 x 6–8 ⚓⏱️",
           "Pendulum Squat: 3 x 8–10 ⏱️",
@@ -184,8 +184,8 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
         day: 4,
         name: "Full Body #1",
         targetDuration: 115,
-        warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls"],
-        stretching: ["Static Lunge Hold", "Hamstring Fold"],
+        warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls", "Bird-Dogs"],
+        stretching: ["Static Lunge Hold (60s)", "Hamstring Fold (60s)"],
         exercises: [
           "Chest-Supported Row: 3 x 8–10 🎗️⏱️",
           "Leg Press: 3 x 10–12 ⏱️",
@@ -204,8 +204,8 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
         day: 5,
         name: "Full Body #2",
         targetDuration: 110,
-        warmup: ["Cat-Cow", "Hip Circles", "Arm Circles"],
-        stretching: ["Quad Stretch", "Lat Stretch"],
+        warmup: ["Arm Circles", "Air Squats", "Wall Slides", "Band Disconnects"],
+        stretching: ["Couch Stretch (60s)", "Doorway Stretch (60s)", "Child's Pose (60s)"],
         exercises: [
           "Dual-Cable EZ-Bar Lat Pulldown: 3 x 10–12 ✋⚓⏱️",
           "Machine Shoulder Press: 4 x 8–10 ⏱️",
@@ -371,8 +371,9 @@ const App: React.FC = () => {
       week: Math.floor(sessions.length / 4) + 1,
       day: dayNum,
       protocolId: protocol.id,
-      warmupCompleted: new Array(day.warmup.length).fill(false),
-      stretchingCompleted: new Array(day.stretching.length).fill(false),
+      warmupCompleted: new Array(day.warmup?.length || 0).fill(false),
+      stretchingCompleted: new Array(day.stretching?.length || 0).fill(false),
+      cardioCompleted: false,
       exercises: day.exercises.map(exName => {
         const parts = exName.split(':');
         const name = parts[0].trim();
@@ -408,7 +409,9 @@ const App: React.FC = () => {
           requiresStraps: exName.includes('🎗️'),
           hasFinisherTarget: exName.includes('✋'),
           hasAnchorTarget: exName.includes('⚓'),
-          hasLongRest: exName.includes('⏱️')
+          hasLongRest: exName.includes('⏱️'),
+          requiresDropSet: exName.includes('🏳️'),
+          requiresRestPause: exName.includes('⏳')
         };
       })
     };
@@ -512,6 +515,31 @@ const App: React.FC = () => {
     setCurrentSession(null);
     setActiveTab('dashboard');
     setLoadingAi(false);
+  };
+
+  const toggleWarmupItem = (index: number) => {
+    if (!currentSession) return;
+    const updated = [...currentSession.warmupCompleted];
+    updated[index] = !updated[index];
+    const updatedSession = { ...currentSession, warmupCompleted: updated };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
+  };
+
+  const toggleStretchingItem = (index: number) => {
+    if (!currentSession) return;
+    const updated = [...currentSession.stretchingCompleted];
+    updated[index] = !updated[index];
+    const updatedSession = { ...currentSession, stretchingCompleted: updated };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
+  };
+
+  const toggleCardio = () => {
+    if (!currentSession) return;
+    const updatedSession = { ...currentSession, cardioCompleted: !currentSession.cardioCompleted };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
   };
 
   const exportCSV = () => {
@@ -843,12 +871,27 @@ const App: React.FC = () => {
             {(() => {
               const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
               if (!day?.warmup?.length) return null;
+              const allCompleted = currentSession.warmupCompleted?.every(c => c);
               return (
-                <div className="bg-emerald-950/30 border border-emerald-500/20 p-4 rounded-3xl">
-                  <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest mb-3">Warmup</h3>
+                <div className={`bg-emerald-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Warmup</h3>
+                    {allCompleted && <Check className="w-4 h-4 text-emerald-400" />}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {day.warmup.map((item, i) => (
-                      <span key={i} className="text-xs font-bold text-emerald-200 bg-emerald-900/30 px-3 py-1.5 rounded-xl">{item}</span>
+                      <button
+                        key={i}
+                        onClick={() => toggleWarmupItem(i)}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 ${
+                          currentSession.warmupCompleted?.[i]
+                            ? 'bg-emerald-500 text-black'
+                            : 'text-emerald-200 bg-emerald-900/30'
+                        }`}
+                      >
+                        {currentSession.warmupCompleted?.[i] && <Check className="w-3 h-3" />}
+                        {item}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -873,8 +916,13 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">{ex.targetRepRange} Reps</span>
-                          {ex.hasFinisherTarget && <span className="text-[10px] font-black bg-red-500/10 text-red-400 px-2 py-1 rounded-md uppercase">✋ Finisher</span>}
-                          {hasPR && <span className="text-[10px] font-black bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-md uppercase">🏆 New PR!</span>}
+                          {ex.requiresStraps && <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-2 py-1 rounded-md">🎗️ Straps</span>}
+                          {ex.hasLongRest && <span className="text-[10px] font-black bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md">⏱️ 3min</span>}
+                          {ex.hasFinisherTarget && <span className="text-[10px] font-black bg-red-500/10 text-red-400 px-2 py-1 rounded-md">✋ Peak 10s</span>}
+                          {ex.hasAnchorTarget && <span className="text-[10px] font-black bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md">⚓ Stretch 30s</span>}
+                          {ex.requiresDropSet && <span className="text-[10px] font-black bg-pink-500/10 text-pink-400 px-2 py-1 rounded-md">🏳️ Drop Set</span>}
+                          {ex.requiresRestPause && <span className="text-[10px] font-black bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded-md">⏳ Rest Pause</span>}
+                          {hasPR && <span className="text-[10px] font-black bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-md">🏆 New PR!</span>}
                         </div>
                       </div>
                     </div>
@@ -956,28 +1004,52 @@ const App: React.FC = () => {
             {(() => {
               const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
               if (!day?.stretching?.length) return null;
+              const allCompleted = currentSession.stretchingCompleted?.every(c => c);
               return (
-                <div className="bg-violet-950/30 border border-violet-500/20 p-4 rounded-3xl">
-                  <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest mb-3">Post-Workout Stretching</h3>
+                <div className={`bg-violet-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-violet-500/50' : 'border-violet-500/20'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest">Post-Workout Stretching</h3>
+                    {allCompleted && <Check className="w-4 h-4 text-violet-400" />}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {day.stretching.map((item, i) => (
-                      <span key={i} className="text-xs font-bold text-violet-200 bg-violet-900/30 px-3 py-1.5 rounded-xl">{item}</span>
+                      <button
+                        key={i}
+                        onClick={() => toggleStretchingItem(i)}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 ${
+                          currentSession.stretchingCompleted?.[i]
+                            ? 'bg-violet-500 text-black'
+                            : 'text-violet-200 bg-violet-900/30'
+                        }`}
+                      >
+                        {currentSession.stretchingCompleted?.[i] && <Check className="w-3 h-3" />}
+                        {item}
+                      </button>
                     ))}
                   </div>
                 </div>
               );
             })()}
 
-            {/* Run Button */}
-            <div className="bg-cyan-950/30 border border-cyan-500/20 p-4 rounded-3xl flex items-center justify-between">
-              <div>
+            {/* Cardio Section */}
+            <button
+              onClick={toggleCardio}
+              className={`w-full bg-cyan-950/30 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${
+                currentSession.cardioCompleted ? 'border-cyan-500/50' : 'border-cyan-500/20'
+              }`}
+            >
+              <div className="text-left">
                 <h3 className="text-[10px] font-black uppercase text-cyan-400 tracking-widest">Cardio Finisher</h3>
-                <p className="text-lg font-black text-cyan-200 mt-1">10-15 min Run</p>
+                <p className={`text-lg font-black mt-1 ${currentSession.cardioCompleted ? 'text-cyan-400' : 'text-cyan-200'}`}>5 min Treadmill</p>
+                <div className="flex gap-3 mt-1">
+                  <span className="text-[10px] font-bold text-cyan-400/70">Speed: 7.0 km/h</span>
+                  <span className="text-[10px] font-bold text-cyan-400/70">Incline: Level 3</span>
+                </div>
               </div>
-              <div className="bg-cyan-500/20 p-3 rounded-xl">
-                <Activity className="w-6 h-6 text-cyan-400" />
+              <div className={`p-3 rounded-xl transition-all ${currentSession.cardioCompleted ? 'bg-cyan-500 text-black' : 'bg-cyan-500/20'}`}>
+                {currentSession.cardioCompleted ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6 text-cyan-400" />}
               </div>
-            </div>
+            </button>
 
             <div className="fixed bottom-6 left-6 right-6">
               <button 
