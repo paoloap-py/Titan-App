@@ -558,12 +558,36 @@ const App: React.FC = () => {
           const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
           const isRestDay = todayWorkoutDay === null;
 
+          // Calculate sessions this week (Monday to Sunday)
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          const day = startOfWeek.getDay();
+          const diff = day === 0 ? 6 : day - 1; // Adjust to start from Monday
+          startOfWeek.setDate(startOfWeek.getDate() - diff);
+          startOfWeek.setHours(0, 0, 0, 0);
+          const sessionsThisWeek = sessions.filter(s => new Date(s.date) >= startOfWeek).length;
+
+          // Calculate progress for 15/30/60/90 day periods
+          const getProgressForDays = (targetDays: number) => {
+            const startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - targetDays);
+            const sessionsInPeriod = sessions.filter(s => new Date(s.date) >= startDate).length;
+            const targetSessions = targetDays === 15 ? 11 : targetDays === 30 ? 22 : targetDays === 60 ? 43 : 65; // ~5 sessions/week
+            const percentage = Math.min(100, Math.round((sessionsInPeriod / targetSessions) * 100));
+            return { days: sessionsInPeriod, target: targetSessions, percentage };
+          };
+
+          const progress15 = getProgressForDays(15);
+          const progress30 = getProgressForDays(30);
+          const progress60 = getProgressForDays(60);
+          const progress90 = getProgressForDays(90);
+
           return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Total Volume', val: sessions.length, icon: Activity, color: 'text-green-400' },
-                { label: 'Weekly Streak', val: '5', sub: 'days', icon: Flame, color: 'text-orange-500' },
+                { label: 'Sessions', val: sessions.length, icon: Activity, color: 'text-green-400' },
+                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500' },
                 { label: 'Protocol', val: 'T-133', icon: Database, color: 'text-blue-400' },
                 { label: 'Alerts', val: alerts.length, icon: AlertTriangle, color: 'text-yellow-400' },
               ].map((kpi, i) => (
@@ -575,6 +599,46 @@ const App: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Progress Tracker - 15/30/60/90 Days */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Progress Tracker</h3>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: '15 Days', ...progress15 },
+                  { label: '30 Days', ...progress30 },
+                  { label: '60 Days', ...progress60 },
+                  { label: '90 Days', ...progress90 },
+                ].map((period, i) => (
+                  <div key={i} className="text-center">
+                    <div className="relative w-full aspect-square mb-2">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <circle
+                          cx="18" cy="18" r="15.5"
+                          fill="none"
+                          stroke="#1e293b"
+                          strokeWidth="3"
+                        />
+                        <circle
+                          cx="18" cy="18" r="15.5"
+                          fill="none"
+                          stroke={period.percentage >= 100 ? '#22c55e' : period.percentage >= 50 ? '#eab308' : '#dc2626'}
+                          strokeWidth="3"
+                          strokeDasharray={`${period.percentage} 100`}
+                          strokeLinecap="round"
+                          style={{ filter: `drop-shadow(0 0 4px ${period.percentage >= 100 ? 'rgba(34, 197, 94, 0.5)' : period.percentage >= 50 ? 'rgba(234, 179, 8, 0.5)' : 'rgba(220, 38, 38, 0.5)'})` }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-lg font-black text-white">{period.percentage}%</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase">{period.label}</p>
+                    <p className="text-xs font-bold text-slate-500">{period.days}/{period.target}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {aiInsight && (
