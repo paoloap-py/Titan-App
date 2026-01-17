@@ -385,7 +385,24 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-4xl mx-auto p-4 md:p-6">
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && (() => {
+          // Determine today's workout based on day of week
+          // Mon=1, Tue=2, Thu=3, Fri=4, Wed/Sat/Sun=rest
+          const dayOfWeek = new Date().getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+          const dayMapping: Record<number, number | null> = {
+            0: null, // Sunday - rest
+            1: 1,    // Monday - Day 1 (Upper 1)
+            2: 2,    // Tuesday - Day 2 (Upper 2)
+            3: null, // Wednesday - rest
+            4: 3,    // Thursday - Day 3 (Lower)
+            5: 4,    // Friday - Day 4 (FB 1)
+            6: null  // Saturday - rest
+          };
+          const todayWorkoutDay = dayMapping[dayOfWeek];
+          const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
+          const isRestDay = todayWorkoutDay === null;
+
+          return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -402,6 +419,59 @@ const App: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Body Map - 50% size */}
+            <div className="flex justify-center">
+              <div className="transform scale-50 origin-top -my-16">
+                <Model
+                  data={[]}
+                  style={{ width: '200px' }}
+                  highlightedColors={['#dc2626']}
+                />
+              </div>
+            </div>
+
+            {/* Today's Workout Section */}
+            <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
+              {isRestDay ? (
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Rest Day</h3>
+                  <p className="text-4xl">💤</p>
+                  <p className="text-sm text-slate-400 mt-2">Recovery is part of the protocol</p>
+                </div>
+              ) : todayProtocol && (
+                <>
+                  <button
+                    onClick={() => handleStartSession(todayProtocol.day)}
+                    className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
+                  >
+                    <div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
+                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-[#64748b]" />
+                  </button>
+                  <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
+                    {todayProtocol.exercises.map((exercise, idx) => {
+                      const parts = exercise.split(':');
+                      const name = parts[0].trim();
+                      const config = parts[1]?.trim() || '';
+                      return (
+                        <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
+                          <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-white font-bold">{name}</p>
+                            <p className="text-[#94a3b8] text-sm">{config}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             {currentSession && (
@@ -444,7 +514,8 @@ const App: React.FC = () => {
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {activeTab === 'session' && currentSession && (
           <div className="space-y-6 pb-24 animate-in slide-in-from-right-10 duration-500">
