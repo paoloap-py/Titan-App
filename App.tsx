@@ -262,14 +262,29 @@ const App: React.FC = () => {
     if (!currentSession) return;
     const updatedExercises = currentSession.exercises.map(ex => {
       if (ex.id !== exId) return ex;
+
       const updatedSets = ex.sets.map((s, idx) => {
-        if (idx !== setIdx) return s;
-        const newSet = { ...s, [field]: value };
-        if (field === 'reps' && value > 0) {
-          newSet.completed = true;
+        if (idx === setIdx) {
+          // Update the target set
+          const newSet = { ...s, [field]: value };
+          if (field === 'reps' && value > 0) {
+            newSet.completed = true;
+          }
+          return newSet;
         }
-        return newSet;
+
+        // Auto-fill subsequent empty sets when first set is entered
+        if (setIdx === 0 && idx > 0 && (field === 'weight' || field === 'reps') && value > 0) {
+          const currentValue = field === 'weight' ? s.weight : s.reps;
+          // Only auto-fill if the set is still empty (0)
+          if (currentValue === 0) {
+            return { ...s, [field]: value };
+          }
+        }
+
+        return s;
       });
+
       return { ...ex, sets: updatedSets };
     });
     const updatedSession = { ...currentSession, exercises: updatedExercises };
