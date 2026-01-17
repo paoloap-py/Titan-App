@@ -843,6 +843,38 @@ const App: React.FC = () => {
               <button onClick={() => setActiveTab('dashboard')} className="p-3 bg-slate-800 rounded-xl text-slate-400"><X className="w-5 h-5" /></button>
             </div>
 
+            {/* Warmup Section */}
+            {(() => {
+              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              if (!day?.warmup?.length) return null;
+              return (
+                <div className="bg-emerald-950/30 border border-emerald-500/20 p-4 rounded-3xl">
+                  <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest mb-3">Warmup</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {day.warmup.map((item, i) => (
+                      <span key={i} className="text-xs font-bold text-emerald-200 bg-emerald-900/30 px-3 py-1.5 rounded-xl">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Stretching Section */}
+            {(() => {
+              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              if (!day?.stretching?.length) return null;
+              return (
+                <div className="bg-violet-950/30 border border-violet-500/20 p-4 rounded-3xl">
+                  <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest mb-3">Stretching</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {day.stretching.map((item, i) => (
+                      <span key={i} className="text-xs font-bold text-violet-200 bg-violet-900/30 px-3 py-1.5 rounded-xl">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
                 const completedSetsCount = ex.sets.filter(s => s.completed && (s.reps > 0 || s.weight > 0)).length;
