@@ -421,17 +421,6 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Body Map - 50% size */}
-            <div className="flex justify-center">
-              <div className="transform scale-50 origin-top -my-16">
-                <Model
-                  data={[]}
-                  style={{ width: '200px' }}
-                  highlightedColors={['#dc2626']}
-                />
-              </div>
-            </div>
-
             {/* Today's Workout Section */}
             <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
               {isRestDay ? (
