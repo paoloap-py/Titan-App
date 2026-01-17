@@ -562,12 +562,11 @@ const App: React.FC = () => {
 
           return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Sessions', val: sessions.length, icon: Activity, color: 'text-green-400' },
                 { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500' },
+                { label: 'All Time', val: sessions.length, icon: Activity, color: 'text-green-400' },
                 { label: 'Protocol', val: 'T-133', icon: Database, color: 'text-blue-400' },
-                { label: 'Alerts', val: alerts.length, icon: AlertTriangle, color: 'text-yellow-400' },
               ].map((kpi, i) => (
                 <div key={i} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl">
                   <kpi.icon className={`w-4 h-4 mb-2 ${kpi.color}`} />
@@ -685,15 +684,15 @@ const App: React.FC = () => {
             </div>
 
             {/* Weekly Muscle Volume Radar Chart */}
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
-              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Weekly Muscle Volume</h3>
-              <div className="h-80">
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2">Weekly Muscle Volume</h3>
+              <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 30, right: 50, bottom: 30, left: 50 }}>
                     <PolarGrid stroke="#1e293b" />
                     <PolarAngleAxis
                       dataKey="muscle"
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
                     />
                     <PolarRadiusAxis
                       angle={90}
