@@ -570,26 +570,6 @@ const App: React.FC = () => {
               </button>
             )}
 
-            {currentSession && (
-              <div className="bg-orange-500 border border-orange-400 p-6 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-center justify-between shadow-2xl animate-pulse">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-2xl"><Activity className="w-8 h-8 text-white" /></div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Active Session Detected</h3>
-                    <p className="text-sm text-orange-100 font-bold uppercase tracking-wide">
-                      {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name} • {currentSession.exercises.length} Movements
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setActiveTab('session')}
-                  className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black uppercase italic tracking-widest shadow-xl flex items-center gap-2 active:scale-95 transition-all"
-                >
-                  <Play className="w-5 h-5 fill-current" /> Resume Now
-                </button>
-              </div>
-            )}
-
             {aiInsight && (
               <div className="bg-indigo-950/30 border border-indigo-500/20 p-6 rounded-3xl flex gap-4 items-start shadow-2xl">
                 <div className="bg-indigo-500/10 p-2 rounded-xl"><Zap className="w-6 h-6 text-indigo-400" /></div>
@@ -621,6 +601,38 @@ const App: React.FC = () => {
                   </button>
                 );
               })}
+              {currentSession && (
+                <div className="p-6 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider bg-orange-600 text-white">
+                      Active
+                    </span>
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">
+                    {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
+                  </h3>
+                  <p className="text-sm mt-1 text-orange-100">{currentSession.exercises.length} Movements • In Progress</p>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => setActiveTab('session')}
+                      className="flex-1 bg-white text-orange-600 px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    >
+                      <Play className="w-4 h-4 fill-current" /> Resume
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this active session?')) {
+                          setCurrentSession(null);
+                        }
+                      }}
+                      className="bg-orange-600 text-white px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all hover:bg-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Muscle Volume Distribution Chart */}
