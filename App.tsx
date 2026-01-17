@@ -110,6 +110,28 @@ const MUSCLE_VOLUME_DATA = [
   { muscle: 'Forearms', current: 8, target: 8 },
 ];
 
+// Muscle load distribution (sets per muscle group)
+const MUSCLE_LOAD_DATA = [
+  { muscle: 'Back', sets: 15 },
+  { muscle: 'Shoulders', sets: 20 },
+  { muscle: 'Chest', sets: 14 },
+  { muscle: 'Quads', sets: 14 },
+  { muscle: 'Hamstrings', sets: 10 },
+  { muscle: 'Biceps', sets: 12 },
+  { muscle: 'Triceps', sets: 11 },
+  { muscle: 'Core', sets: 12 },
+  { muscle: 'Calves', sets: 8 },
+];
+
+// Average volume by weekday
+const WEEKDAY_VOLUME_DATA = [
+  { day: 'Mon', name: 'Upper 1', avgVolume: 12500 },
+  { day: 'Tue', name: 'Upper 2', avgVolume: 10800 },
+  { day: 'Thu', name: 'Lower', avgVolume: 18200 },
+  { day: 'Fri', name: 'FB 1', avgVolume: 15600 },
+  { day: 'Sat', name: 'FB 2', avgVolume: 14200 },
+];
+
 const DEFAULT_PROTOCOLS: Protocol[] = [
   {
     id: 'titan-133',
@@ -620,47 +642,87 @@ const App: React.FC = () => {
               )}
             </div>
 
-            {/* Muscle Volume Distribution Chart */}
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
-              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Weekly Muscle Volume</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                    <PolarGrid stroke="#1e293b" />
-                    <PolarAngleAxis
-                      dataKey="muscle"
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
-                    />
-                    <PolarRadiusAxis
-                      angle={90}
-                      domain={[0, 25]}
-                      tick={{ fill: '#64748b', fontSize: 8 }}
-                      axisLine={false}
-                    />
-                    <Radar
-                      name="Target"
-                      dataKey="target"
-                      stroke="#64748b"
-                      fill="#374151"
-                      fillOpacity={0.3}
-                      strokeDasharray="4 4"
-                      strokeWidth={2}
-                    />
-                    <Radar
-                      name="Current"
-                      dataKey="current"
-                      stroke="#dc2626"
-                      fill="#dc2626"
-                      fillOpacity={0.5}
-                      strokeWidth={2}
-                      style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: 20 }}
-                      formatter={(value) => <span className="text-xs font-black text-slate-400 uppercase">{value}</span>}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Muscle Volume Distribution Radar Chart */}
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+                <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Weekly Muscle Volume</h3>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                      <PolarGrid stroke="#1e293b" />
+                      <PolarAngleAxis
+                        dataKey="muscle"
+                        tick={{ fill: '#94a3b8', fontSize: 8, fontWeight: 700 }}
+                      />
+                      <PolarRadiusAxis
+                        angle={90}
+                        domain={[0, 25]}
+                        tick={{ fill: '#64748b', fontSize: 8 }}
+                        axisLine={false}
+                      />
+                      <Radar
+                        name="Target"
+                        dataKey="target"
+                        stroke="#64748b"
+                        fill="#374151"
+                        fillOpacity={0.3}
+                        strokeDasharray="4 4"
+                        strokeWidth={2}
+                      />
+                      <Radar
+                        name="Current"
+                        dataKey="current"
+                        stroke="#dc2626"
+                        fill="#dc2626"
+                        fillOpacity={0.5}
+                        strokeWidth={2}
+                        style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Muscle Load Distribution Bar Chart */}
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+                <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Muscle Load (Sets)</h3>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={MUSCLE_LOAD_DATA} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                      <XAxis type="number" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} />
+                      <YAxis type="category" dataKey="muscle" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} axisLine={false} width={55} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        itemStyle={{ color: '#dc2626' }}
+                      />
+                      <Bar dataKey="sets" fill="#dc2626" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Average Volume by Weekday Bar Chart */}
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+                <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Avg Volume by Day</h3>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={WEEKDAY_VOLUME_DATA} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} axisLine={false} />
+                      <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                        labelStyle={{ color: '#fff', fontWeight: 700 }}
+                        formatter={(value: number) => [`${value.toLocaleString()} kg`, 'Volume']}
+                        labelFormatter={(label) => WEEKDAY_VOLUME_DATA.find(d => d.day === label)?.name || label}
+                      />
+                      <Bar dataKey="avgVolume" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>
