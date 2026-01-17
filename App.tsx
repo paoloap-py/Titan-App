@@ -856,22 +856,6 @@ const App: React.FC = () => {
               );
             })()}
 
-            {/* Stretching Section */}
-            {(() => {
-              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
-              if (!day?.stretching?.length) return null;
-              return (
-                <div className="bg-violet-950/30 border border-violet-500/20 p-4 rounded-3xl">
-                  <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest mb-3">Stretching</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {day.stretching.map((item, i) => (
-                      <span key={i} className="text-xs font-bold text-violet-200 bg-violet-900/30 px-3 py-1.5 rounded-xl">{item}</span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
             <div className="space-y-4">
               {currentSession.exercises.map(ex => {
                 const completedSetsCount = ex.sets.filter(s => s.completed && (s.reps > 0 || s.weight > 0)).length;
@@ -967,6 +951,33 @@ const App: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Post-Workout Stretching Section */}
+            {(() => {
+              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              if (!day?.stretching?.length) return null;
+              return (
+                <div className="bg-violet-950/30 border border-violet-500/20 p-4 rounded-3xl">
+                  <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest mb-3">Post-Workout Stretching</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {day.stretching.map((item, i) => (
+                      <span key={i} className="text-xs font-bold text-violet-200 bg-violet-900/30 px-3 py-1.5 rounded-xl">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Run Button */}
+            <div className="bg-cyan-950/30 border border-cyan-500/20 p-4 rounded-3xl flex items-center justify-between">
+              <div>
+                <h3 className="text-[10px] font-black uppercase text-cyan-400 tracking-widest">Cardio Finisher</h3>
+                <p className="text-lg font-black text-cyan-200 mt-1">10-15 min Run</p>
+              </div>
+              <div className="bg-cyan-500/20 p-3 rounded-xl">
+                <Activity className="w-6 h-6 text-cyan-400" />
+              </div>
             </div>
 
             <div className="fixed bottom-6 left-6 right-6">
