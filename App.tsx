@@ -735,7 +735,7 @@ const App: React.FC = () => {
               </div>
 
               {/* Progress Tracker - 15/30/60/90 Days */}
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl flex flex-col justify-center">
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
                 <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Progress Tracker</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
