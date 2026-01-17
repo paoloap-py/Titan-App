@@ -1006,10 +1006,10 @@ const App: React.FC = () => {
               if (!day?.stretching?.length) return null;
               const allCompleted = currentSession.stretchingCompleted?.every(c => c);
               return (
-                <div className={`bg-violet-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-violet-500/50' : 'border-violet-500/20'}`}>
+                <div className={`bg-emerald-950/30 border p-4 rounded-3xl transition-all ${allCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'}`}>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[10px] font-black uppercase text-violet-400 tracking-widest">Post-Workout Stretching</h3>
-                    {allCompleted && <Check className="w-4 h-4 text-violet-400" />}
+                    <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Post-Workout Stretching</h3>
+                    {allCompleted && <Check className="w-4 h-4 text-emerald-400" />}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {day.stretching.map((item, i) => (
@@ -1018,8 +1018,8 @@ const App: React.FC = () => {
                         onClick={() => toggleStretchingItem(i)}
                         className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 ${
                           currentSession.stretchingCompleted?.[i]
-                            ? 'bg-violet-500 text-black'
-                            : 'text-violet-200 bg-violet-900/30'
+                            ? 'bg-emerald-500 text-black'
+                            : 'text-emerald-200 bg-emerald-900/30'
                         }`}
                       >
                         {currentSession.stretchingCompleted?.[i] && <Check className="w-3 h-3" />}
@@ -1034,20 +1034,20 @@ const App: React.FC = () => {
             {/* Cardio Section */}
             <button
               onClick={toggleCardio}
-              className={`w-full bg-cyan-950/30 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${
-                currentSession.cardioCompleted ? 'border-cyan-500/50' : 'border-cyan-500/20'
+              className={`w-full bg-emerald-950/30 border p-4 rounded-3xl flex items-center justify-between transition-all active:scale-[0.98] ${
+                currentSession.cardioCompleted ? 'border-emerald-500/50' : 'border-emerald-500/20'
               }`}
             >
               <div className="text-left">
-                <h3 className="text-[10px] font-black uppercase text-cyan-400 tracking-widest">Cardio Finisher</h3>
-                <p className={`text-lg font-black mt-1 ${currentSession.cardioCompleted ? 'text-cyan-400' : 'text-cyan-200'}`}>5 min Treadmill</p>
+                <h3 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Cardio Finisher</h3>
+                <p className={`text-lg font-black mt-1 ${currentSession.cardioCompleted ? 'text-emerald-400' : 'text-emerald-200'}`}>5 min Treadmill</p>
                 <div className="flex gap-3 mt-1">
-                  <span className="text-[10px] font-bold text-cyan-400/70">Speed: 7.0 km/h</span>
-                  <span className="text-[10px] font-bold text-cyan-400/70">Incline: Level 3</span>
+                  <span className="text-[10px] font-bold text-emerald-400/70">Speed: 7.0 km/h</span>
+                  <span className="text-[10px] font-bold text-emerald-400/70">Incline: Level 3</span>
                 </div>
               </div>
-              <div className={`p-3 rounded-xl transition-all ${currentSession.cardioCompleted ? 'bg-cyan-500 text-black' : 'bg-cyan-500/20'}`}>
-                {currentSession.cardioCompleted ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6 text-cyan-400" />}
+              <div className={`p-3 rounded-xl transition-all ${currentSession.cardioCompleted ? 'bg-emerald-500 text-black' : 'bg-emerald-500/20'}`}>
+                {currentSession.cardioCompleted ? <Check className="w-6 h-6" /> : <Activity className="w-6 h-6 text-emerald-400" />}
               </div>
             </button>
 
