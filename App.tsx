@@ -27,14 +27,20 @@ import {
   Play,
   Timer
 } from 'lucide-react';
-import { 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
-  YAxis
+  YAxis,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Legend
 } from 'recharts';
 import { 
   WorkoutSession, 
@@ -49,7 +55,7 @@ import { getBodyHighlighterMuscles } from './muscleMapping';
 import * as gemini from './services/geminiService';
 
 // User bodyweight for bodyweight exercises
-const USER_BODYWEIGHT = 95;
+const USER_BODYWEIGHT = 85;
 
 // Bodyweight exercises that should auto-fill with user's weight
 const BODYWEIGHT_EXERCISES = [
@@ -77,8 +83,32 @@ const parseMaxReps = (targetRepRange: string): number => {
   return 15;
 };
 
+// Helper to parse target rep range and get min reps (for auto-population)
+const parseMinReps = (targetRepRange: string): number => {
+  const match = targetRepRange.match(/(\d+)(?:–|-)?(\d+)?/);
+  if (match) {
+    return parseInt(match[1]) || 10;
+  }
+  return 10;
+};
+
 // Helper to calculate volume (weight × reps) for PR comparison
 const calculateVolume = (weight: number, reps: number): number => weight * reps;
+
+// Muscle volume distribution data for radar chart
+const MUSCLE_VOLUME_DATA = [
+  { muscle: 'Shoulders', current: 20, target: 22 },
+  { muscle: 'Back', current: 15, target: 20 },
+  { muscle: 'Quads', current: 14, target: 16 },
+  { muscle: 'Chest', current: 14, target: 14 },
+  { muscle: 'Biceps', current: 12, target: 12 },
+  { muscle: 'Core', current: 12, target: 14 },
+  { muscle: 'Triceps', current: 11, target: 11 },
+  { muscle: 'Glutes', current: 10, target: 10 },
+  { muscle: 'Hamstrings', current: 10, target: 10 },
+  { muscle: 'Calves', current: 8, target: 8 },
+  { muscle: 'Forearms', current: 8, target: 8 },
+];
 
 const DEFAULT_PROTOCOLS: Protocol[] = [
   {
@@ -95,64 +125,98 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       'Compounds (⏱️) get 3 min rest, isolations 90s'
     ],
     days: [
-      { 
-        day: 1, 
-        name: "Upper 1", 
+      {
+        day: 1,
+        name: "Upper 1",
         targetDuration: 95,
         warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns"],
         stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)"],
         exercises: [
-          "Meadows Row: 3 x 8–10 🎗️✋⚓⏱️", 
-          "Machine Chest Press: 3 x 8–10 ✋⚓⏱️", 
-          "Weighted Dips: 2 x 8–10 ⏱️", 
-          "Cable Y-Raise: 2 x 12–15 🏳️", 
-          "Reverse Cable Crossover: 3 x 12–15", 
+          "Meadows Row: 3 x 8–10 🎗️✋⚓⏱️",
+          "Machine Chest Press: 3 x 8–10 ✋⚓⏱️",
+          "Weighted Dips: 2 x 8–10 ⏱️",
+          "Cable Y-Raise: 2 x 12–15 🏳️",
+          "Reverse Cable Crossover: 3 x 12–15",
+          "Cable External Rotation: 2 x 15–20",
+          "Hanging Leg Raises: 2 x Failure",
+          "Dead Hang: 3 x Max Hold",
+          "Dragon Flag: 3 x Failure",
           "Skull Crushers: 2 x 10–12 ⏳⚓"
         ]
       },
-      { 
-        day: 2, 
-        name: "Upper 2", 
+      {
+        day: 2,
+        name: "Upper 2",
         targetDuration: 90,
         warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations"],
         stretching: ["Cross-Body Shoulder Stretch", "Child's Pose"],
         exercises: [
-          "Chest-Supported Dual-Cable Row: 3 x 10–12 🎗️✋⚓⏱️", 
-          "One-Arm Cable Pulldown: 3 x 10–12 🎗️⏱️", 
-          "Reverse Machine Fly: 3 x 12–15 ⏳", 
-          "Seated Cable Chest Fly: 2 x 12–15 ⚓", 
-          "Machine Preacher Curl: 3 x 8–10 ⏳⚓", 
-          "Cable Kickbacks: 3 x 12–15 🏳️"
+          "Chest-Supported Dual-Cable Row: 3 x 10–12 🎗️✋⚓⏱️",
+          "One-Arm Cable Pulldown: 3 x 10–12 🎗️⏱️",
+          "Reverse Machine Fly: 3 x 12–15 ⏳",
+          "Seated Cable Chest Fly: 2 x 12–15 ⚓",
+          "Machine Preacher Curl: 3 x 8–10 ⏳⚓",
+          "Cable Kickbacks: 3 x 12–15 🏳️",
+          "Hanging Corner Raises: 2 x Failure",
+          "Cable Twist: 2 x 12–15",
+          "Wrist Curl: 2 x 15–20"
         ]
       },
-      { 
-        day: 3, 
-        name: "Lower", 
+      {
+        day: 3,
+        name: "Lower",
         targetDuration: 92,
         warmup: ["Leg Swings", "BW Lunges", "Cossack Squats"],
         stretching: ["Pigeon Pose", "Couch Stretch"],
         exercises: [
-          "Hack Squat: 3 x 6–8 ⚓⏱️", 
-          "Pendulum Squat: 3 x 8–10 ⏱️", 
-          "Walking Lunges: 4 x 10/leg ⏱️", 
-          "RDL: 3 x 8–10 🎗️⚓⏱️", 
-          "Leg Curl Singolo: 3 x 10–12 🏳️", 
-          "Lying Leg Curl: 1 x 10–12 ⚓"
+          "Hack Squat: 3 x 6–8 ⚓⏱️",
+          "Pendulum Squat: 3 x 8–10 ⏱️",
+          "Walking Lunges: 4 x 10/leg ⏱️",
+          "RDL: 3 x 8–10 🎗️⚓⏱️",
+          "Leg Curl Singolo: 3 x 10–12 🏳️",
+          "Lying Leg Curl: 1 x 10–12 ⚓",
+          "Adductor Machine: 2 x 12–15",
+          "Abductor Machine: 2 x 12–15",
+          "Seated Calf Raise: 3 x 12–15 ⏳"
         ]
       },
-      { 
-        day: 4, 
-        name: "FB 1", 
+      {
+        day: 4,
+        name: "FB 1",
         targetDuration: 115,
         warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls"],
         stretching: ["Static Lunge Hold", "Hamstring Fold"],
         exercises: [
           "Chest-Supported Row: 3 x 8–10 🎗️⏱️",
-          "Leg Press: 3 x 10-12 ⏱️",
-          "Face Pulls: 3 x 15-20",
-          "Smith Incline Bench: 3 x 8-10 ✋⚓⏱️",
-          "Close Grip Bench: 2 x 10-12",
-          "Cable Lateral Raise: 3 x 15-20"
+          "Leg Press: 3 x 10–12 ⏱️",
+          "Face Pulls: 3 x 12–15 ⏳",
+          "45° Back Extension: 4 x 12–15",
+          "Smith Incline Bench: 2 x 6–8 ⚓⏱️",
+          "Close Grip Bench: 3 x 8–10 ⏱️",
+          "Cable Lateral Raise: 3 x 12–15 🏳️",
+          "EZ Bar Curl: 3 x 8–10 ⏳",
+          "Reverse EZ-Bar Curl: 3 x 12–15",
+          "Cable Crunch: 3 x 12–15 ⏳",
+          "Seated Calf Raise: 2 x 12–15 ⏳"
+        ]
+      },
+      {
+        day: 5,
+        name: "FB 2",
+        targetDuration: 110,
+        warmup: ["Cat-Cow", "Hip Circles", "Arm Circles"],
+        stretching: ["Quad Stretch", "Lat Stretch"],
+        exercises: [
+          "Dual-Cable EZ-Bar Lat Pulldown: 3 x 10–12 ✋⚓⏱️",
+          "Machine Shoulder Press: 4 x 8–10 ⏱️",
+          "Incline DB Press: 3 x 8–10 ⚓⏱️",
+          "High-to-Low Cable Fly: 2 x 12–15 🏳️",
+          "Standing Calf Raise: 3 x 12–15 ⏳",
+          "Bulgarian Split Squat: 3 x 8–10 ⏱️",
+          "Lying Leg Curl: 3 x 10–12 ⚓",
+          "Leg Extension: 2 x 12–15 🏳️⚓",
+          "Overhead Cable Ext: 3 x 10–12 ⏳⚓🎗️",
+          "Hammer Preacher Curl: 3 x 8–10 ⏳⚓"
         ]
       }
     ]
@@ -204,19 +268,24 @@ const App: React.FC = () => {
   };
 
   // Get best previous volume for an exercise (for PR detection)
+  // Returns -1 if no previous data exists (so nothing shows as PR)
   const getBestPreviousVolume = (exerciseName: string): number => {
-    let bestVolume = 0;
+    let bestVolume = -1;
+    let hasData = false;
     sessions.forEach(session => {
       session.exercises.forEach(ex => {
         if (ex.name.toLowerCase() === exerciseName.toLowerCase()) {
           ex.sets.forEach(set => {
-            const volume = calculateVolume(set.weight, set.reps);
-            if (volume > bestVolume) bestVolume = volume;
+            if (set.weight > 0 && set.reps > 0) {
+              hasData = true;
+              const volume = calculateVolume(set.weight, set.reps);
+              if (volume > bestVolume) bestVolume = volume;
+            }
           });
         }
       });
     });
-    return bestVolume;
+    return hasData ? bestVolume : -1;
   };
 
   // Get last session's data for an exercise (for auto-population)
@@ -248,6 +317,7 @@ const App: React.FC = () => {
         const name = parts[0].trim();
         const config = parts[1]?.trim() || '';
         const plannedSetsCount = parseInt(config.split('x')[0]) || 3;
+        const targetRepRange = config.split('x')[1]?.trim().split(' ')[0] || '8-10';
 
         const isBW = isBodyweightExercise(name);
         const defaultWeight = isBW ? USER_BODYWEIGHT : 0;
@@ -255,20 +325,18 @@ const App: React.FC = () => {
         // Get last session's data for this exercise
         const lastExercise = getLastSessionExercise(name);
 
-        // Create sets with auto-populated data from last session
-        const sets = Array.from({ length: plannedSetsCount }, (_, setIdx) => {
-          // Try to get data from last session's corresponding set
-          const lastSet = lastExercise?.sets[setIdx];
-          if (lastSet && lastSet.weight > 0) {
-            return {
-              reps: lastSet.reps > 0 ? lastSet.reps : 0,
-              weight: lastSet.weight,
-              completed: false
-            };
-          }
-          // Fall back to default (bodyweight or 0)
-          return { reps: 0, weight: defaultWeight, completed: false };
-        });
+        // Create sets with auto-populated weight and reps
+        // Weight: from last session's first set, or bodyweight if applicable
+        // Reps: minimum of target rep range (e.g., 10 for "10-12")
+        const lastFirstSet = lastExercise?.sets[0];
+        const prefilledWeight = lastFirstSet && lastFirstSet.weight > 0 ? lastFirstSet.weight : defaultWeight;
+        const prefilledReps = parseMinReps(targetRepRange);
+
+        const sets = Array.from({ length: plannedSetsCount }, () => ({
+          reps: prefilledReps,
+          weight: prefilledWeight,
+          completed: false
+        }));
 
         return {
           id: Math.random().toString(36).substr(2, 9),
@@ -302,16 +370,6 @@ const App: React.FC = () => {
           }
           return newSet;
         }
-
-        // Auto-fill subsequent empty sets when first set is entered
-        if (setIdx === 0 && idx > 0 && (field === 'weight' || field === 'reps') && value > 0) {
-          const currentValue = field === 'weight' ? s.weight : s.reps;
-          // Only auto-fill if the set is still empty (0)
-          if (currentValue === 0) {
-            return { ...s, [field]: value };
-          }
-        }
-
         return s;
       });
 
@@ -320,6 +378,37 @@ const App: React.FC = () => {
     const updatedSession = { ...currentSession, exercises: updatedExercises };
     saveSessionNow(updatedSession);
     setCurrentSession(updatedSession);
+  };
+
+  // Auto-fill subsequent sets when user finishes typing (onBlur)
+  // Works from any row - fills all subsequent rows that are still 0
+  const handleSetBlur = (exId: string, setIdx: number, field: 'reps' | 'weight', value: number) => {
+    if (!currentSession || value <= 0) return;
+
+    const updatedExercises = currentSession.exercises.map(ex => {
+      if (ex.id !== exId) return ex;
+
+      // Fill all subsequent sets that are still 0 with this set's value
+      const finalSets = ex.sets.map((s, idx) => {
+        if (idx <= setIdx) return s; // Skip current and previous sets
+        const currentValue = field === 'weight' ? s.weight : s.reps;
+        if (currentValue === 0) {
+          return { ...s, [field]: value };
+        }
+        return s;
+      });
+
+      return { ...ex, sets: finalSets };
+    });
+
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
+  };
+
+  // Select all text when input is focused
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
   };
 
   const addSet = (exId: string) => {
@@ -441,20 +530,43 @@ const App: React.FC = () => {
             3: null, // Wednesday - rest
             4: 3,    // Thursday - Day 3 (Lower)
             5: 4,    // Friday - Day 4 (FB 1)
-            6: null  // Saturday - rest
+            6: 5     // Saturday - Day 5 (FB 2)
           };
           const todayWorkoutDay = dayMapping[dayOfWeek];
           const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
           const isRestDay = todayWorkoutDay === null;
 
+          // Calculate sessions this week (Monday to Sunday)
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          const day = startOfWeek.getDay();
+          const diff = day === 0 ? 6 : day - 1; // Adjust to start from Monday
+          startOfWeek.setDate(startOfWeek.getDate() - diff);
+          startOfWeek.setHours(0, 0, 0, 0);
+          const sessionsThisWeek = sessions.filter(s => new Date(s.date) >= startOfWeek).length;
+
+          // Calculate progress for 15/30/60/90 day periods
+          const getProgressForDays = (targetDays: number) => {
+            const startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - targetDays);
+            const sessionsInPeriod = sessions.filter(s => new Date(s.date) >= startDate).length;
+            const targetSessions = targetDays === 15 ? 11 : targetDays === 30 ? 22 : targetDays === 60 ? 43 : 65; // ~5 sessions/week
+            const percentage = Math.min(100, Math.round((sessionsInPeriod / targetSessions) * 100));
+            return { days: sessionsInPeriod, target: targetSessions, percentage };
+          };
+
+          const progress15 = getProgressForDays(15);
+          const progress30 = getProgressForDays(30);
+          const progress60 = getProgressForDays(60);
+          const progress90 = getProgressForDays(90);
+
           return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Total Volume', val: sessions.length, icon: Activity, color: 'text-green-400' },
-                { label: 'Weekly Streak', val: '5', sub: 'days', icon: Flame, color: 'text-orange-500' },
+                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500' },
+                { label: 'All Time', val: sessions.length, icon: Activity, color: 'text-green-400' },
                 { label: 'Protocol', val: 'T-133', icon: Database, color: 'text-blue-400' },
-                { label: 'Alerts', val: alerts.length, icon: AlertTriangle, color: 'text-yellow-400' },
               ].map((kpi, i) => (
                 <div key={i} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl">
                   <kpi.icon className={`w-4 h-4 mb-2 ${kpi.color}`} />
@@ -466,67 +578,45 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {/* Today's Workout Section */}
-            <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
-              {isRestDay ? (
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-2">Rest Day</h3>
-                  <p className="text-4xl">💤</p>
-                  <p className="text-sm text-slate-400 mt-2">Recovery is part of the protocol</p>
-                </div>
-              ) : todayProtocol && (
-                <>
-                  <button
-                    onClick={() => handleStartSession(todayProtocol.day)}
-                    className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
-                  >
-                    <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
+            {/* Progress Tracker - 15/30/60/90 Days */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Progress Tracker</h3>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: '15 Days', ...progress15 },
+                  { label: '30 Days', ...progress30 },
+                  { label: '60 Days', ...progress60 },
+                  { label: '90 Days', ...progress90 },
+                ].map((period, i) => (
+                  <div key={i} className="text-center">
+                    <div className="relative w-full aspect-square mb-2">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <circle
+                          cx="18" cy="18" r="15.5"
+                          fill="none"
+                          stroke="#1e293b"
+                          strokeWidth="3"
+                        />
+                        <circle
+                          cx="18" cy="18" r="15.5"
+                          fill="none"
+                          stroke={period.percentage >= 100 ? '#22c55e' : period.percentage >= 50 ? '#eab308' : '#dc2626'}
+                          strokeWidth="3"
+                          strokeDasharray={`${period.percentage} 100`}
+                          strokeLinecap="round"
+                          style={{ filter: `drop-shadow(0 0 4px ${period.percentage >= 100 ? 'rgba(34, 197, 94, 0.5)' : period.percentage >= 50 ? 'rgba(234, 179, 8, 0.5)' : 'rgba(220, 38, 38, 0.5)'})` }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-lg font-black text-white">{period.percentage}%</span>
+                      </div>
                     </div>
-                    <ChevronRight className="w-6 h-6 text-[#64748b]" />
-                  </button>
-                  <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
-                    {todayProtocol.exercises.map((exercise, idx) => {
-                      const parts = exercise.split(':');
-                      const name = parts[0].trim();
-                      const config = parts[1]?.trim() || '';
-                      return (
-                        <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
-                          <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
-                            {idx + 1}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white font-bold">{name}</p>
-                            <p className="text-[#94a3b8] text-sm">{config}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    <p className="text-[10px] font-black text-slate-400 uppercase">{period.label}</p>
+                    <p className="text-xs font-bold text-slate-500">{period.days}/{period.target}</p>
                   </div>
-                </>
-              )}
-            </div>
-
-            {currentSession && (
-              <div className="bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex flex-col md:flex-row gap-6 items-center justify-between shadow-2xl animate-pulse">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-2xl"><Activity className="w-8 h-8 text-white" /></div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Active Session Detected</h3>
-                    <p className="text-sm text-red-100 font-bold uppercase tracking-wide">
-                      {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name} • {currentSession.exercises.length} Movements
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('session')}
-                  className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase italic tracking-widest shadow-xl flex items-center gap-2 active:scale-95 transition-all"
-                >
-                  <Play className="w-5 h-5 fill-current" /> Resume Now
-                </button>
+                ))}
               </div>
-            )}
+            </div>
 
             {aiInsight && (
               <div className="bg-indigo-950/30 border border-indigo-500/20 p-6 rounded-3xl flex gap-4 items-start shadow-2xl">
@@ -536,16 +626,113 @@ const App: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEFAULT_PROTOCOLS[0].days.map(day => (
-                <button key={day.day} onClick={() => handleStartSession(day.day)} className="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left hover:border-red-600/50 transition-all active:scale-95 shadow-xl">
+              {DEFAULT_PROTOCOLS[0].days.map(day => {
+                const isToday = day.day === todayWorkoutDay;
+                return (
+                  <button
+                    key={day.day}
+                    onClick={() => handleStartSession(day.day)}
+                    className={`p-6 rounded-3xl text-left transition-all active:scale-95 shadow-xl ${
+                      isToday
+                        ? 'bg-red-600 border border-red-400 hover:bg-red-700 animate-pulse'
+                        : 'bg-slate-900 border border-slate-800 hover:border-red-600/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider ${
+                        isToday ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
+                      }`}>Day {day.day}</span>
+                      <ChevronRight className={`w-5 h-5 ${isToday ? 'text-white' : 'text-slate-700'}`} />
+                    </div>
+                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
+                    <p className={`text-sm mt-1 ${isToday ? 'text-red-100' : 'text-slate-500'}`}>{day.exercises.length} Movements • {day.targetDuration} min</p>
+                  </button>
+                );
+              })}
+              {currentSession && (
+                <div className="p-6 rounded-3xl bg-orange-500 border border-orange-400 shadow-xl animate-pulse">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-lg uppercase tracking-wider">Day {day.day}</span>
-                    <ChevronRight className="w-5 h-5 text-slate-700" />
+                    <span className="text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider bg-orange-600 text-white">
+                      Active
+                    </span>
+                    <Activity className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{day.exercises.length} Movements</p>
-                </button>
-              ))}
+                  <h3 className="text-2xl font-black text-white italic uppercase mt-3">
+                    {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
+                  </h3>
+                  <p className="text-sm mt-1 text-orange-100">{currentSession.exercises.length} Movements • In Progress</p>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => setActiveTab('session')}
+                      className="flex-1 bg-white text-orange-600 px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    >
+                      <Play className="w-4 h-4 fill-current" /> Resume
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this active session?')) {
+                          setCurrentSession(null);
+                        }
+                      }}
+                      className="bg-orange-600 text-white px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all hover:bg-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Weekly Muscle Volume Radar Chart */}
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2">Weekly Muscle Volume</h3>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 30, right: 50, bottom: 30, left: 50 }}>
+                    <PolarGrid stroke="#1e293b" />
+                    <PolarAngleAxis
+                      dataKey="muscle"
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 25]}
+                      tick={{ fill: '#64748b', fontSize: 8 }}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                      labelStyle={{ color: '#fff', fontWeight: 700, textTransform: 'uppercase' }}
+                      formatter={(value: number, name: string) => [
+                        `${value} sets`,
+                        name === 'current' ? 'Current' : 'Target'
+                      ]}
+                    />
+                    <Radar
+                      name="target"
+                      dataKey="target"
+                      stroke="#64748b"
+                      fill="#374151"
+                      fillOpacity={0.3}
+                      strokeDasharray="4 4"
+                      strokeWidth={2}
+                    />
+                    <Radar
+                      name="current"
+                      dataKey="current"
+                      stroke="#dc2626"
+                      fill="#dc2626"
+                      fillOpacity={0.5}
+                      strokeWidth={2}
+                      style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
+                    />
+                    <Legend
+                      wrapperStyle={{ paddingTop: 10 }}
+                      formatter={(value) => <span className="text-xs font-black text-slate-400 uppercase">{value}</span>}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
           );
@@ -569,7 +756,7 @@ const App: React.FC = () => {
                 const isComplete = completedSetsCount >= ex.plannedSets;
                 const maxTargetReps = parseMaxReps(ex.targetRepRange);
                 const bestPreviousVolume = getBestPreviousVolume(ex.name);
-                const hasPR = ex.sets.some(set => set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume);
+                const hasPR = bestPreviousVolume > 0 && ex.sets.some(set => set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume);
                 return (
                   <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${hasPR ? 'border-yellow-500/50' : isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
                     <div className="p-6 border-b border-slate-800/50 flex justify-between items-start">
@@ -590,7 +777,7 @@ const App: React.FC = () => {
                     <div className="p-6 space-y-3">
                       {ex.sets.map((set, i) => {
                         const isTooLight = set.reps > maxTargetReps + 3 && set.weight > 0;
-                        const isPRSet = set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
+                        const isPRSet = bestPreviousVolume > 0 && set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
                         return (
                           <div key={i}>
                             <div className="flex items-center gap-3">
@@ -602,6 +789,8 @@ const App: React.FC = () => {
                                 placeholder="KG"
                                 value={set.weight || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
+                                onBlur={(e) => handleSetBlur(ex.id, i, 'weight', parseFloat(e.target.value) || 0)}
+                                onFocus={handleInputFocus}
                                 className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all"
                               />
                               <input
@@ -609,6 +798,8 @@ const App: React.FC = () => {
                                 placeholder="REPS"
                                 value={set.reps || ''}
                                 onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
+                                onBlur={(e) => handleSetBlur(ex.id, i, 'reps', parseInt(e.target.value) || 0)}
+                                onFocus={handleInputFocus}
                                 className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
