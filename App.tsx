@@ -127,7 +127,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
     days: [
       {
         day: 1,
-        name: "Upper 1",
+        name: "Upper #1",
         targetDuration: 95,
         warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns"],
         stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)"],
@@ -146,7 +146,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 2,
-        name: "Upper 2",
+        name: "Upper #2",
         targetDuration: 90,
         warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations"],
         stretching: ["Cross-Body Shoulder Stretch", "Child's Pose"],
@@ -182,7 +182,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 4,
-        name: "Full Body 1",
+        name: "Full Body #1",
         targetDuration: 115,
         warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls"],
         stretching: ["Static Lunge Hold", "Hamstring Fold"],
@@ -202,7 +202,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 5,
-        name: "Full Body 2",
+        name: "Full Body #2",
         targetDuration: 110,
         warmup: ["Cat-Cow", "Hip Circles", "Arm Circles"],
         stretching: ["Quad Stretch", "Lat Stretch"],
