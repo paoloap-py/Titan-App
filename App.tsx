@@ -442,18 +442,17 @@ const App: React.FC = () => {
   };
 
   // Auto-fill subsequent sets when user finishes typing (onBlur)
-  // Works from any row - fills all subsequent rows that are still 0
+  // Works from any row - fills all subsequent uncompleted sets
   const handleSetBlur = (exId: string, setIdx: number, field: 'reps' | 'weight', value: number) => {
     if (!currentSession || value <= 0) return;
 
     const updatedExercises = currentSession.exercises.map(ex => {
       if (ex.id !== exId) return ex;
 
-      // Fill all subsequent sets that are still 0 with this set's value
+      // Fill all subsequent sets that are NOT completed yet
       const finalSets = ex.sets.map((s, idx) => {
         if (idx <= setIdx) return s; // Skip current and previous sets
-        const currentValue = field === 'weight' ? s.weight : s.reps;
-        if (currentValue === 0) {
+        if (!s.completed) {
           return { ...s, [field]: value };
         }
         return s;
