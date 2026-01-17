@@ -728,8 +728,9 @@ const App: React.FC = () => {
                       <Play className="w-4 h-4 fill-current" /> Resume
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm('Delete this active session?')) {
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Delete this active session?')) {
                           setCurrentSession(null);
                         }
                       }}
