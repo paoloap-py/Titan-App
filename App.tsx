@@ -564,15 +564,15 @@ const App: React.FC = () => {
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500' },
-                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400' },
-                { label: 'Protocol', val: 'T-133', icon: Database, color: 'text-blue-400' },
+                { label: 'Total Sessions', val: sessions.length, icon: Activity, color: 'text-green-400', blink: false },
+                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500', blink: false },
+                { label: 'Today', val: isRestDay ? 'Rest' : todayProtocol?.name || '-', icon: Zap, color: 'text-red-500', blink: !isRestDay },
               ].map((kpi, i) => (
-                <div key={i} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl">
+                <div key={i} className={`bg-slate-900 border p-5 rounded-3xl ${kpi.blink ? 'border-red-500 animate-pulse' : 'border-slate-800'}`}>
                   <kpi.icon className={`w-4 h-4 mb-2 ${kpi.color}`} />
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{kpi.label}</p>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-3xl font-black text-white">{kpi.val}</span>
+                    <span className={`text-3xl font-black ${kpi.blink ? 'text-red-500' : 'text-white'}`}>{kpi.val}</span>
                   </div>
                 </div>
               ))}
