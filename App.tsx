@@ -519,36 +519,17 @@ const App: React.FC = () => {
 
             {/* Today's Workout Section - only show on training days */}
             {!isRestDay && todayProtocol && (
-              <div className="bg-[#1e293b] rounded-3xl overflow-hidden">
-                <button
-                  onClick={() => handleStartSession(todayProtocol.day)}
-                  className="w-full p-6 flex justify-between items-center hover:bg-slate-700/30 active:bg-slate-700/50 transition-colors"
-                >
-                  <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Today's Workout</p>
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
-                  </div>
-                  <ChevronRight className="w-6 h-6 text-[#64748b]" />
-                </button>
-                <div className="border-t border-slate-700/50 max-h-64 overflow-y-auto">
-                  {todayProtocol.exercises.map((exercise, idx) => {
-                    const parts = exercise.split(':');
-                    const name = parts[0].trim();
-                    const config = parts[1]?.trim() || '';
-                    return (
-                      <div key={idx} className="px-6 py-3 flex items-center gap-3 border-b border-slate-700/30 last:border-b-0">
-                        <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white font-bold">{name}</p>
-                          <p className="text-[#94a3b8] text-sm">{config}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <button
+                onClick={() => handleStartSession(todayProtocol.day)}
+                className="w-full bg-red-600 border border-red-400 p-6 rounded-[2.5rem] flex justify-between items-center shadow-2xl hover:bg-red-700 active:scale-95 transition-all"
+              >
+                <div>
+                  <p className="text-[10px] font-black text-red-200 uppercase tracking-widest">Today's Workout</p>
+                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-1">{todayProtocol.name}</h3>
+                  <p className="text-sm text-red-100 mt-1">{todayProtocol.exercises.length} Movements • {todayProtocol.targetDuration} min</p>
                 </div>
-              </div>
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
             )}
 
             {currentSession && (
