@@ -589,7 +589,7 @@ const App: React.FC = () => {
                   { label: '90 Days', ...progress90 },
                 ].map((period, i) => (
                   <div key={i} className="text-center">
-                    <div className="relative w-full aspect-square mb-2">
+                    <div className="relative w-1/2 aspect-square mb-2 mx-auto">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                         <circle
                           cx="18" cy="18" r="15.5"
@@ -608,7 +608,7 @@ const App: React.FC = () => {
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-lg font-black text-white">{period.percentage}%</span>
+                        <span className="text-sm font-black text-white">{period.percentage}%</span>
                       </div>
                     </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase">{period.label}</p>
