@@ -235,7 +235,7 @@ const App: React.FC = () => {
   const [timerExpanded, setTimerExpanded] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [restTimer, setRestTimer] = useState<number>(0);
-  const [restTimerActive, setRestTimerActive] = useState(false);
+  const [restTimerEndTime, setRestTimerEndTime] = useState<number | null>(null);
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -257,29 +257,46 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentSession?.id]);
 
-  // Rest timer countdown effect
+  // Rest timer countdown effect - uses end timestamp to work when app is backgrounded
   useEffect(() => {
-    if (!restTimerActive || restTimer <= 0) {
-      if (restTimerActive && restTimer <= 0) {
-        setRestTimerActive(false);
-        // Vibrate when timer ends (if supported)
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-      }
+    if (!restTimerEndTime) {
+      setRestTimer(0);
       return;
     }
 
-    const interval = setInterval(() => {
-      setRestTimer(prev => prev - 1);
-    }, 1000);
+    const updateTimer = () => {
+      const remaining = Math.ceil((restTimerEndTime - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setRestTimer(0);
+        setRestTimerEndTime(null);
+        // Vibrate when timer ends (if supported)
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      } else {
+        setRestTimer(remaining);
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [restTimerActive, restTimer]);
+    updateTimer(); // Initial update
+    const interval = setInterval(updateTimer, 1000);
+
+    // Also update when app becomes visible again (returning from background)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        updateTimer();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [restTimerEndTime]);
 
   // Start rest timer with duration based on exercise type
   const startRestTimer = (isLongRest: boolean) => {
     const duration = isLongRest ? 180 : 90; // 3:00 or 1:30
-    setRestTimer(duration);
-    setRestTimerActive(true);
+    setRestTimerEndTime(Date.now() + duration * 1000);
   };
 
   // Format seconds to MM:SS or MMM:SS
@@ -1090,7 +1107,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Rest Timer Overlay */}
-            {restTimerActive && (
+            {restTimerEndTime && restTimer > 0 && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
                 <div className="text-center">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Rest Timer</p>
@@ -1098,7 +1115,7 @@ const App: React.FC = () => {
                     {formatTime(restTimer)}
                   </p>
                   <button
-                    onClick={() => setRestTimerActive(false)}
+                    onClick={() => setRestTimerEndTime(null)}
                     className="mt-8 bg-slate-800 text-white px-8 py-3 rounded-2xl font-black uppercase text-sm tracking-wider active:scale-95 transition-all"
                   >
                     Skip Rest
