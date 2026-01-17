@@ -182,7 +182,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 4,
-        name: "FB 1",
+        name: "Full Body 1",
         targetDuration: 115,
         warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls"],
         stretching: ["Static Lunge Hold", "Hamstring Fold"],
@@ -202,7 +202,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 5,
-        name: "FB 2",
+        name: "Full Body 2",
         targetDuration: 110,
         warmup: ["Cat-Cow", "Hip Circles", "Arm Circles"],
         stretching: ["Quad Stretch", "Lat Stretch"],
@@ -760,8 +760,7 @@ const App: React.FC = () => {
                       }`}>Day {day.day}</span>
                       <ChevronRight className={`w-5 h-5 ${isToday ? 'text-white' : 'text-slate-700'}`} />
                     </div>
-                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name}</h3>
-                    <p className={`text-sm mt-1 ${isToday ? 'text-red-100' : 'text-slate-500'}`}>{day.exercises.length} Movements • {day.targetDuration} min</p>
+                    <h3 className="text-2xl font-black text-white italic uppercase mt-3">{day.name} <span className={`text-lg ${isToday ? 'text-red-100' : 'text-slate-500'}`}>• {day.targetDuration}′</span></h3>
                   </button>
                 );
               })}
