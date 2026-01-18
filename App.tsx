@@ -787,13 +787,18 @@ const App: React.FC = () => {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed.sessions) {
-          setSessions(parsed.sessions);
+        // Support both wrapped format { sessions: [...] } and direct array [...]
+        const sessionsData = parsed.sessions || (Array.isArray(parsed) ? parsed : null);
+        if (sessionsData) {
+          setSessions(sessionsData);
+          localStorage.setItem('titan_data', JSON.stringify(sessionsData));
           setAlerts(parsed.alerts || []);
-          alert("Backup Restored Successfully.");
+          alert("Backup Restored! " + sessionsData.length + " sessions imported.");
+        } else {
+          alert("Invalid format. Expected { sessions: [...] } or [...]");
         }
       } catch (err) {
-        alert("Invalid Backup File.");
+        alert("Invalid Backup File: " + err);
       }
     };
     reader.readAsText(file);
