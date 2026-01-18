@@ -782,26 +782,40 @@ const App: React.FC = () => {
 
   const importBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      alert("No file selected");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const parsed = JSON.parse(event.target?.result as string);
+        const content = event.target?.result as string;
+        console.log("File content:", content.substring(0, 200));
+        const parsed = JSON.parse(content);
+        console.log("Parsed:", parsed);
         // Support both wrapped format { sessions: [...] } and direct array [...]
         const sessionsData = parsed.sessions || (Array.isArray(parsed) ? parsed : null);
-        if (sessionsData) {
+        console.log("Sessions data:", sessionsData);
+        if (sessionsData && sessionsData.length > 0) {
           setSessions(sessionsData);
           localStorage.setItem('titan_data', JSON.stringify(sessionsData));
           setAlerts(parsed.alerts || []);
           alert("Backup Restored! " + sessionsData.length + " sessions imported.");
+          window.location.reload(); // Force reload to show imported data
         } else {
-          alert("Invalid format. Expected { sessions: [...] } or [...]");
+          alert("No sessions found in file. Keys found: " + Object.keys(parsed).join(", "));
         }
       } catch (err) {
         alert("Invalid Backup File: " + err);
+        console.error("Import error:", err);
       }
     };
+    reader.onerror = () => {
+      alert("Failed to read file");
+    };
     reader.readAsText(file);
+    // Reset input so same file can be selected again
+    e.target.value = '';
   };
 
   return (
