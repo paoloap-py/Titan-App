@@ -1225,7 +1225,7 @@ const App: React.FC = () => {
                                 onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
                                 onBlur={(e) => handleSetBlur(ex.id, i, 'weight', parseFloat(e.target.value) || 0)}
                                 onFocus={handleInputFocus}
-                                className="w-16 bg-slate-950 border border-slate-800 p-2 rounded-xl text-center text-sm font-black focus:border-red-500 outline-none transition-all"
+                                className="w-20 bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center font-black focus:border-red-500 outline-none transition-all"
                               />
                               <input
                                 type="number"
@@ -1234,7 +1234,7 @@ const App: React.FC = () => {
                                 onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
                                 onBlur={(e) => handleSetBlur(ex.id, i, 'reps', parseInt(e.target.value) || 0)}
                                 onFocus={handleInputFocus}
-                                className={`w-16 bg-slate-950 border p-2 rounded-xl text-center text-sm font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
+                                className={`w-20 bg-slate-950 border p-2.5 rounded-xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
                                 onClick={() => updateSet(ex.id, i, 'completed', !set.completed, ex.hasLongRest)}
