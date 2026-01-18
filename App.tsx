@@ -236,6 +236,9 @@ const App: React.FC = () => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [restTimer, setRestTimer] = useState<number>(0);
   const [restTimerEndTime, setRestTimerEndTime] = useState<number | null>(null);
+  const [githubToken, setGithubToken] = useState<string>('');
+  const [gistId, setGistId] = useState<string>('');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -355,6 +358,106 @@ const App: React.FC = () => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Load GitHub settings from localStorage on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('titan_github_token');
+    const savedGistId = localStorage.getItem('titan_gist_id');
+    if (savedToken) setGithubToken(savedToken);
+    if (savedGistId) setGistId(savedGistId);
+  }, []);
+
+  // Save GitHub token to localStorage
+  const saveGithubToken = (token: string) => {
+    setGithubToken(token);
+    localStorage.setItem('titan_github_token', token);
+  };
+
+  // Sync data to GitHub Gist
+  const syncToGist = async (data: WorkoutSession[]) => {
+    if (!githubToken) return;
+
+    setSyncStatus('syncing');
+    try {
+      const content = JSON.stringify({ sessions: data, exportedAt: new Date().toISOString() }, null, 2);
+
+      if (gistId) {
+        // Update existing Gist
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            files: { 'titan-workout-data.json': { content } }
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to update Gist');
+      } else {
+        // Create new Gist
+        const response = await fetch('https://api.github.com/gists', {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            description: 'Titan Workout App Data Backup',
+            public: false,
+            files: { 'titan-workout-data.json': { content } }
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to create Gist');
+
+        const gistData = await response.json();
+        setGistId(gistData.id);
+        localStorage.setItem('titan_gist_id', gistData.id);
+      }
+
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Gist sync error:', error);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
+
+  // Load data from GitHub Gist
+  const loadFromGist = async () => {
+    if (!githubToken || !gistId) return;
+
+    setSyncStatus('syncing');
+    try {
+      const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { 'Authorization': `token ${githubToken}` }
+      });
+
+      if (!response.ok) throw new Error('Failed to load Gist');
+
+      const gistData = await response.json();
+      const content = gistData.files['titan-workout-data.json']?.content;
+
+      if (content) {
+        const parsed = JSON.parse(content);
+        if (parsed.sessions && Array.isArray(parsed.sessions)) {
+          setSessions(parsed.sessions);
+          localStorage.setItem('titan_data', JSON.stringify(parsed.sessions));
+          setSyncStatus('success');
+          setTimeout(() => setSyncStatus('idle'), 3000);
+          return;
+        }
+      }
+      throw new Error('Invalid data format');
+    } catch (error) {
+      console.error('Gist load error:', error);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
   };
 
   // Get target duration in seconds for current session
@@ -608,6 +711,13 @@ const App: React.FC = () => {
     setLoadingAi(true);
     const updatedSessions = [currentSession, ...sessions];
     setSessions(updatedSessions);
+    localStorage.setItem('titan_data', JSON.stringify(updatedSessions));
+
+    // Auto-sync to GitHub Gist if token is configured
+    if (githubToken) {
+      syncToGist(updatedSessions);
+    }
+
     const insight = await gemini.getWorkoutInsights(currentSession);
     setAiInsight(insight);
     const newAlerts = await gemini.generateHealthAlerts(updatedSessions);
@@ -949,7 +1059,56 @@ const App: React.FC = () => {
                   <input type="file" accept=".json" onChange={importBackup} className="hidden" />
                 </label>
               </div>
-              <p className="text-[10px] text-slate-600 mt-2 text-center">Export to backup, then upload to Drive/GitHub</p>
+
+              {/* GitHub Gist Sync */}
+              <div className="mt-4 pt-4 border-t border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-black uppercase text-slate-500 tracking-widest">GitHub Cloud Sync</h4>
+                  {syncStatus !== 'idle' && (
+                    <span className={`text-[10px] font-black uppercase ${
+                      syncStatus === 'syncing' ? 'text-blue-400' :
+                      syncStatus === 'success' ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {syncStatus === 'syncing' ? 'Syncing...' :
+                       syncStatus === 'success' ? 'Synced!' : 'Error'}
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  placeholder="GitHub Personal Access Token"
+                  value={githubToken}
+                  onChange={(e) => saveGithubToken(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:border-slate-600 mb-2"
+                />
+                {githubToken && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => syncToGist(sessions)}
+                      disabled={syncStatus === 'syncing'}
+                      className="flex-1 bg-slate-800 text-white px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700 disabled:opacity-50"
+                    >
+                      <Save className="w-3 h-3" /> Sync Now
+                    </button>
+                    {gistId && (
+                      <button
+                        onClick={loadFromGist}
+                        disabled={syncStatus === 'syncing'}
+                        className="flex-1 bg-slate-800 text-white px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700 disabled:opacity-50"
+                      >
+                        <Download className="w-3 h-3" /> Load from Cloud
+                      </button>
+                    )}
+                  </div>
+                )}
+                <p className="text-[10px] text-slate-600 mt-2">
+                  {githubToken
+                    ? gistId
+                      ? 'Auto-syncs on session complete'
+                      : 'Click "Sync Now" to create backup'
+                    : 'Paste token with "gist" scope for auto-sync'}
+                </p>
+              </div>
             </div>
           </div>
           );
