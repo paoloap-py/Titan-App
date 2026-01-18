@@ -1194,9 +1194,9 @@ const App: React.FC = () => {
                         const isPRSet = bestPreviousVolume > 0 && set.reps > 0 && set.weight > 0 && calculateVolume(set.weight, set.reps) > bestPreviousVolume;
                         return (
                           <div key={i}>
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 flex items-center justify-center rounded-2xl text-xs font-black transition-colors ${isPRSet ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-900/40' : set.completed ? 'bg-green-500 text-black shadow-lg shadow-green-900/40' : 'bg-slate-800 text-slate-500'}`}>
-                                {isPRSet ? <Trophy className="w-4 h-4" /> : i+1}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-black transition-colors ${isPRSet ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-900/40' : set.completed ? 'bg-green-500 text-black shadow-lg shadow-green-900/40' : 'bg-slate-800 text-slate-500'}`}>
+                                {isPRSet ? <Trophy className="w-3 h-3" /> : i+1}
                               </div>
                               <input
                                 type="number"
@@ -1205,7 +1205,7 @@ const App: React.FC = () => {
                                 onChange={(e) => updateSet(ex.id, i, 'weight', parseFloat(e.target.value))}
                                 onBlur={(e) => handleSetBlur(ex.id, i, 'weight', parseFloat(e.target.value) || 0)}
                                 onFocus={handleInputFocus}
-                                className="flex-1 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-center font-black focus:border-red-500 outline-none transition-all"
+                                className="w-16 bg-slate-950 border border-slate-800 p-2 rounded-xl text-center text-sm font-black focus:border-red-500 outline-none transition-all"
                               />
                               <input
                                 type="number"
@@ -1214,13 +1214,13 @@ const App: React.FC = () => {
                                 onChange={(e) => updateSet(ex.id, i, 'reps', parseInt(e.target.value))}
                                 onBlur={(e) => handleSetBlur(ex.id, i, 'reps', parseInt(e.target.value) || 0)}
                                 onFocus={handleInputFocus}
-                                className={`flex-1 bg-slate-950 border p-3 rounded-2xl text-center font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
+                                className={`w-16 bg-slate-950 border p-2 rounded-xl text-center text-sm font-black outline-none transition-all ${isTooLight ? 'border-orange-500 text-orange-400' : 'border-slate-800 focus:border-red-500'}`}
                               />
                               <button
                                 onClick={() => updateSet(ex.id, i, 'completed', !set.completed, ex.hasLongRest)}
-                                className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${set.completed ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}
+                                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${set.completed ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-600'}`}
                               >
-                                <Check className="w-6 h-6" />
+                                <Check className="w-5 h-5" />
                               </button>
                             </div>
                             {isTooLight && (
