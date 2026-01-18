@@ -849,16 +849,25 @@ const App: React.FC = () => {
       <main className="max-w-4xl mx-auto p-4 md:p-6">
         {activeTab === 'dashboard' && (() => {
           // Determine next workout day based on last completed session
-          // If no sessions → Day 1, otherwise → next day in sequence (1→2→3→4→5→1)
-          const getNextWorkoutDay = (): number => {
+          // Cycle: Day 1 → 2 → 3 → 4 → 5 → Rest → Day 1
+          const getNextWorkoutDay = (): number | null => {
             if (sessions.length === 0) return 1; // No history → start with Day 1
             const lastSession = sessions[0]; // Sessions are sorted newest first
             const lastDay = lastSession.day;
-            return lastDay >= 5 ? 1 : lastDay + 1; // Cycle: 1→2→3→4→5→1
+
+            // If last session was Day 5, check if it was today (rest day)
+            if (lastDay === 5) {
+              const lastDate = new Date(lastSession.date);
+              const today = new Date();
+              const isToday = lastDate.toDateString() === today.toDateString();
+              if (isToday) return null; // Rest day after Day 5
+            }
+
+            return lastDay >= 5 ? 1 : lastDay + 1;
           };
           const todayWorkoutDay = getNextWorkoutDay();
-          const todayProtocol = DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay);
-          const isRestDay = false; // Never rest - always show next workout
+          const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
+          const isRestDay = todayWorkoutDay === null;
 
           // Calculate sessions this week (Monday to Sunday)
           const now = new Date();
