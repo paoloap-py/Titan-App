@@ -493,13 +493,19 @@ const App: React.FC = () => {
     return '#dc2626'; // Red - behind
   };
 
+  // Sort sessions by date (newest first)
+  const sortSessionsByDate = (sessions: WorkoutSession[]): WorkoutSession[] => {
+    return [...sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
   // Load persistence data on mount
   useEffect(() => {
     const saved = localStorage.getItem('titan_data');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setSessions(parsed.sessions || []);
+        const sortedSessions = sortSessionsByDate(parsed.sessions || []);
+        setSessions(sortedSessions);
         setAlerts(parsed.alerts || []);
         if (parsed.currentSession) {
           setCurrentSession(parsed.currentSession);
@@ -808,11 +814,12 @@ const App: React.FC = () => {
         const sessionsData = parsed.sessions || (Array.isArray(parsed) ? parsed : null);
         console.log("Sessions data:", sessionsData);
         if (sessionsData && sessionsData.length > 0) {
-          setSessions(sessionsData);
+          const sortedSessions = sortSessionsByDate(sessionsData);
+          setSessions(sortedSessions);
           const alertsData = parsed.alerts || [];
           setAlerts(alertsData);
           localStorage.setItem('titan_data', JSON.stringify({
-            sessions: sessionsData,
+            sessions: sortedSessions,
             alerts: alertsData,
             currentSession: null
           }));
