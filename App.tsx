@@ -446,7 +446,11 @@ const App: React.FC = () => {
         const parsed = JSON.parse(content);
         if (parsed.sessions && Array.isArray(parsed.sessions)) {
           setSessions(parsed.sessions);
-          localStorage.setItem('titan_data', JSON.stringify(parsed.sessions));
+          localStorage.setItem('titan_data', JSON.stringify({
+            sessions: parsed.sessions,
+            alerts: [],
+            currentSession: null
+          }));
           setSyncStatus('success');
           setTimeout(() => setSyncStatus('idle'), 3000);
           return;
@@ -804,8 +808,13 @@ const App: React.FC = () => {
         console.log("Sessions data:", sessionsData);
         if (sessionsData && sessionsData.length > 0) {
           setSessions(sessionsData);
-          localStorage.setItem('titan_data', JSON.stringify(sessionsData));
-          setAlerts(parsed.alerts || []);
+          const alertsData = parsed.alerts || [];
+          setAlerts(alertsData);
+          localStorage.setItem('titan_data', JSON.stringify({
+            sessions: sessionsData,
+            alerts: alertsData,
+            currentSession: null
+          }));
           alert("Backup Restored! " + sessionsData.length + " sessions imported.");
           window.location.reload(); // Force reload to show imported data
         } else {
