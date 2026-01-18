@@ -711,7 +711,13 @@ const App: React.FC = () => {
     setLoadingAi(true);
     const updatedSessions = [currentSession, ...sessions];
     setSessions(updatedSessions);
-    localStorage.setItem('titan_data', JSON.stringify(updatedSessions));
+
+    // Save with correct format (sessions, alerts, no currentSession since it's complete)
+    localStorage.setItem('titan_data', JSON.stringify({
+      sessions: updatedSessions,
+      alerts,
+      currentSession: null
+    }));
 
     // Auto-sync to GitHub Gist if token is configured
     if (githubToken) {
