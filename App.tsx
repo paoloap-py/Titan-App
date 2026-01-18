@@ -1178,6 +1178,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">{ex.targetRepRange} Reps</span>
+                          <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">Rest {ex.hasLongRest ? '3:00' : '1:30'}</span>
                           {ex.requiresStraps && <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 px-2 py-1 rounded-md">🎗️ Straps</span>}
                           {ex.hasFinisherTarget && <span className="text-[10px] font-black bg-red-500/10 text-red-400 px-2 py-1 rounded-md">✋ Peak 10s</span>}
                           {ex.hasAnchorTarget && <span className="text-[10px] font-black bg-purple-500/10 text-purple-400 px-2 py-1 rounded-md">⚓ Stretch 30s</span>}
@@ -1233,27 +1234,22 @@ const App: React.FC = () => {
                       })}
                     </div>
 
-                    {/* NEW ACTION BAR */}
-                    <div className="px-6 pb-6 pt-2 flex items-center justify-between gap-4">
-                      <button 
+                    {/* ACTION BAR */}
+                    <div className="px-6 pb-6 pt-2 flex items-center gap-2">
+                      <button
                         onClick={() => removeSet(ex.id)}
                         disabled={ex.sets.length <= 1}
-                        className="flex-1 min-h-[48px] bg-[#374151] rounded-[8px] flex items-center justify-center gap-2 px-3 py-3 text-red-500 font-black uppercase italic transition-all active:scale-95 disabled:opacity-30"
+                        className="flex-1 h-10 bg-slate-800 rounded-xl flex items-center justify-center gap-1 text-red-500 text-xs font-black uppercase transition-all active:scale-95 disabled:opacity-30"
                       >
-                        <Minus className="w-5 h-5" />
+                        <Minus className="w-4 h-4" />
                         <span>Delete</span>
                       </button>
-                      
-                      <div className="text-slate-500 text-xs font-black uppercase tracking-[0.2em] italic shrink-0">
-                        Rest {ex.hasLongRest ? '3:00' : '1:30'}
-                      </div>
-
-                      <button 
+                      <button
                         onClick={() => addSet(ex.id)}
-                        className="flex-1 min-h-[48px] bg-[#374151] rounded-[8px] flex items-center justify-center gap-2 px-3 py-3 text-green-500 font-black uppercase italic transition-all active:scale-95"
+                        className="flex-1 h-10 bg-slate-800 rounded-xl flex items-center justify-center gap-1 text-green-500 text-xs font-black uppercase transition-all active:scale-95"
                       >
-                        <Plus className="w-5 h-5" />
-                        <span>Add Set</span>
+                        <Plus className="w-4 h-4" />
+                        <span>Add</span>
                       </button>
                     </div>
                   </div>
