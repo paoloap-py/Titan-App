@@ -570,7 +570,7 @@ const App: React.FC = () => {
     const newSession: WorkoutSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      week: Math.floor(sessions.length / 4) + 1,
+      week: Math.floor(sessions.length / 5) + 1, // 5 workout days per week
       day: dayNum,
       protocolId: protocol.id,
       warmupCompleted: new Array(day.warmup?.length || 0).fill(false),
@@ -687,9 +687,10 @@ const App: React.FC = () => {
       if (ex.id !== exId) return ex;
       const lastSet = ex.sets[ex.sets.length - 1];
       const newWeight = lastSet ? lastSet.weight : 0;
+      const newReps = parseMinReps(ex.targetRepRange); // Prefill with target reps
       return {
         ...ex,
-        sets: [...ex.sets, { reps: 0, weight: newWeight, completed: false }]
+        sets: [...ex.sets, { reps: newReps, weight: newWeight, completed: false }]
       };
     });
     const updatedSession = { ...currentSession, exercises: updatedExercises };
