@@ -1,52 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LinkedIn Job Collector</title>
-  <link rel="stylesheet" href="popup.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      padding: 16px 20px;
+      min-width: 200px;
+    }
+    #status {
+      font-size: 14px;
+    }
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>LinkedIn Job Collector</h1>
-      <p class="subtitle">Collect jobs from all open tabs</p>
-    </header>
-
-    <div id="status-section" class="section">
-      <div id="page-status" class="status">
-        <span class="status-icon">⏳</span>
-        <span class="status-text">Scanning tabs...</span>
-      </div>
-    </div>
-
-    <div id="tabs-list" class="section">
-      <h3>LinkedIn Job Tabs (<span id="tab-count">0</span>)</h3>
-      <div id="jobs-container"></div>
-    </div>
-
-    <div id="actions" class="section">
-      <button id="collect-btn" class="btn btn-primary" disabled>
-        <span class="btn-icon">📋</span>
-        Collect All & Copy to Clipboard
-      </button>
-      <button id="open-claude-btn" class="btn btn-secondary">
-        <span class="btn-icon">🤖</span>
-        Open Claude Chat
-      </button>
-    </div>
-
-    <div id="success-message" class="success hidden">
-      <span>✓</span> Copied to clipboard! Paste into Claude chat.
-    </div>
-
-    <div id="error" class="error hidden"></div>
-
-    <footer>
-      <span class="hint">Open LinkedIn job pages in multiple tabs, then collect all at once</span>
-    </footer>
-  </div>
-
+  <div id="status">Collecting jobs...</div>
   <script src="popup.js"></script>
 </body>
 </html>
