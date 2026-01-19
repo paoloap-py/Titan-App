@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Extension Icons</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    canvas { border: 1px solid #ccc; margin: 10px; }
+    .icon-row { margin-bottom: 20px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Icon Generator</h1>
+  <p>Click the buttons below to download each icon size:</p>
+
+  <div class="icon-row">
+    <h3>16x16</h3>
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <button onclick="download(16)">Download icon16.png</button>
+  </div>
+
+  <div class="icon-row">
+    <h3>48x48</h3>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <button onclick="download(48)">Download icon48.png</button>
+  </div>
+
+  <div class="icon-row">
+    <h3>128x128</h3>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+    <button onclick="download(128)">Download icon128.png</button>
+  </div>
+
+  <script>
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0077b5"/>
+          <stop offset="100%" style="stop-color:#005a8c"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="60" fill="url(#bg)"/>
+      <rect x="28" y="50" width="16" height="48" rx="2" fill="white"/>
+      <circle cx="36" cy="36" r="10" fill="white"/>
+      <path d="M52 74 L68 74 L68 66 L84 78 L68 90 L68 82 L52 82 Z" fill="white"/>
+      <circle cx="100" cy="44" r="4" fill="#ffd700"/>
+      <circle cx="92" cy="52" r="3" fill="#ffd700"/>
+      <circle cx="104" cy="56" r="2" fill="#ffd700"/>
+    </svg>`;
+
+    function renderIcon(size) {
+      const canvas = document.getElementById('canvas' + size);
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    function download(size) {
+      const canvas = document.getElementById('canvas' + size);
+      const link = document.createElement('a');
+      link.download = 'icon' + size + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Render all icons on load
+    [16, 48, 128].forEach(renderIcon);
+  </script>
+</body>
+</html>
