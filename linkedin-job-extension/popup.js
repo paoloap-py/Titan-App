@@ -53,9 +53,26 @@ async function collectAndCopy() {
     // Show success and open Claude
     statusEl.innerHTML = `<span class="success">✓ Copied ${jobDescriptions.length} job(s)! Opening Claude...</span>`;
 
-    // Open specific Claude chat
-    setTimeout(() => {
-      chrome.tabs.create({ url: 'https://claude.ai/chat/a5f68798-ae22-455c-98b7-3743fbad94eb' });
+    // Open Claude in a new window on the right side
+    setTimeout(async () => {
+      const currentWindow = await chrome.windows.getCurrent();
+      const screenWidth = currentWindow.width + currentWindow.left;
+
+      // Position Claude window on the right half of the screen
+      chrome.windows.create({
+        url: 'https://claude.ai/chat/a5f68798-ae22-455c-98b7-3743fbad94eb',
+        type: 'normal',
+        left: Math.round(screenWidth / 2),
+        top: currentWindow.top,
+        width: Math.round(screenWidth / 2),
+        height: currentWindow.height
+      });
+
+      // Resize current window to left half
+      chrome.windows.update(currentWindow.id, {
+        left: 0,
+        width: Math.round(screenWidth / 2)
+      });
     }, 500);
 
   } catch (error) {
