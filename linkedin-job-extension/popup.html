@@ -3,69 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LinkedIn Job Analyzer</title>
+  <title>LinkedIn Job Collector</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>LinkedIn Job Analyzer</h1>
-      <p class="subtitle">Powered by Claude AI</p>
+      <h1>LinkedIn Job Collector</h1>
+      <p class="subtitle">Collect jobs from all open tabs</p>
     </header>
-
-    <div id="api-key-section" class="section">
-      <label for="api-key">Claude API Key:</label>
-      <div class="input-group">
-        <input type="password" id="api-key" placeholder="sk-ant-...">
-        <button id="save-key" class="btn btn-small">Save</button>
-      </div>
-      <p class="hint">Your API key is stored locally and never shared.</p>
-    </div>
 
     <div id="status-section" class="section">
       <div id="page-status" class="status">
         <span class="status-icon">⏳</span>
-        <span class="status-text">Checking page...</span>
+        <span class="status-text">Scanning tabs...</span>
       </div>
     </div>
 
-    <div id="job-preview" class="section hidden">
-      <h3>Detected Job:</h3>
-      <div id="job-title" class="job-title"></div>
-      <div id="company-name" class="company-name"></div>
+    <div id="tabs-list" class="section">
+      <h3>LinkedIn Job Tabs (<span id="tab-count">0</span>)</h3>
+      <div id="jobs-container"></div>
     </div>
 
     <div id="actions" class="section">
-      <button id="capture-btn" class="btn btn-primary" disabled>
+      <button id="collect-btn" class="btn btn-primary" disabled>
         <span class="btn-icon">📋</span>
-        Capture Job Description
+        Collect All & Copy to Clipboard
       </button>
-      <button id="analyze-btn" class="btn btn-secondary" disabled>
+      <button id="open-claude-btn" class="btn btn-secondary">
         <span class="btn-icon">🤖</span>
-        Analyze with Claude
+        Open Claude Chat
       </button>
     </div>
 
-    <div id="job-description-section" class="section hidden">
-      <h3>Job Description:</h3>
-      <textarea id="job-description" rows="6" placeholder="Paste job description here or capture from page..."></textarea>
-    </div>
-
-    <div id="analysis-section" class="section hidden">
-      <h3>Claude's Analysis:</h3>
-      <div id="analysis-result" class="analysis-result"></div>
-    </div>
-
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <span>Analyzing with Claude...</span>
+    <div id="success-message" class="success hidden">
+      <span>✓</span> Copied to clipboard! Paste into Claude chat.
     </div>
 
     <div id="error" class="error hidden"></div>
 
     <footer>
-      <a href="#" id="history-link">View History</a>
-      <span class="version">v1.0.0</span>
+      <span class="hint">Open LinkedIn job pages in multiple tabs, then collect all at once</span>
     </footer>
   </div>
 

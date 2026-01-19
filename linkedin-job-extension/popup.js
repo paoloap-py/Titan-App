@@ -1,259 +1,298 @@
 // DOM Elements
-const apiKeyInput = document.getElementById('api-key');
-const saveKeyBtn = document.getElementById('save-key');
 const pageStatus = document.getElementById('page-status');
-const jobPreview = document.getElementById('job-preview');
-const jobTitleEl = document.getElementById('job-title');
-const companyNameEl = document.getElementById('company-name');
-const captureBtn = document.getElementById('capture-btn');
-const analyzeBtn = document.getElementById('analyze-btn');
-const jobDescSection = document.getElementById('job-description-section');
-const jobDescTextarea = document.getElementById('job-description');
-const analysisSection = document.getElementById('analysis-section');
-const analysisResult = document.getElementById('analysis-result');
-const loadingEl = document.getElementById('loading');
+const tabCount = document.getElementById('tab-count');
+const jobsContainer = document.getElementById('jobs-container');
+const collectBtn = document.getElementById('collect-btn');
+const openClaudeBtn = document.getElementById('open-claude-btn');
+const successMessage = document.getElementById('success-message');
 const errorEl = document.getElementById('error');
 
-let currentJobData = null;
+let linkedInTabs = [];
 
-// Initialize popup
+// Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadApiKey();
-  await checkCurrentPage();
+  await scanForLinkedInTabs();
   setupEventListeners();
 });
 
-// Load saved API key
-async function loadApiKey() {
-  const result = await chrome.storage.local.get(['claudeApiKey']);
-  if (result.claudeApiKey) {
-    apiKeyInput.value = result.claudeApiKey;
-  }
-}
-
-// Save API key
-async function saveApiKey() {
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
-    showError('Please enter a valid API key');
-    return;
-  }
-
-  await chrome.storage.local.set({ claudeApiKey: apiKey });
-  showSuccess('API key saved!');
-  updateButtonStates();
-}
-
-// Check if current page is a LinkedIn job page
-async function checkCurrentPage() {
+// Scan all open tabs for LinkedIn job pages
+async function scanForLinkedInTabs() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    updateStatus('⏳', 'Scanning tabs...');
 
-    if (!tab.url || !tab.url.includes('linkedin.com/jobs')) {
-      updateStatus('warning', '⚠️', 'Navigate to a LinkedIn job page to capture');
-      captureBtn.disabled = true;
-      // Still allow manual paste
-      jobDescSection.classList.remove('hidden');
-      updateButtonStates();
+    const allTabs = await chrome.tabs.query({});
+    linkedInTabs = allTabs.filter(tab =>
+      tab.url && tab.url.includes('linkedin.com/jobs')
+    );
+
+    tabCount.textContent = linkedInTabs.length;
+
+    if (linkedInTabs.length === 0) {
+      updateStatus('⚠️', 'No LinkedIn job tabs found');
+      jobsContainer.innerHTML = '<div class="no-jobs">Open some LinkedIn job pages first</div>';
+      collectBtn.disabled = true;
       return;
     }
 
-    // Try to get job data from content script
-    try {
-      const response = await chrome.tabs.sendMessage(tab.id, { action: 'getJobData' });
+    updateStatus('✓', `Found ${linkedInTabs.length} LinkedIn job tab(s)`);
+    pageStatus.classList.add('success');
 
-      if (response && response.success) {
-        currentJobData = response.data;
-        updateStatus('success', '✓', 'LinkedIn job detected');
+    // Display found tabs
+    await displayTabs();
 
-        if (currentJobData.title || currentJobData.company) {
-          jobPreview.classList.remove('hidden');
-          jobTitleEl.textContent = currentJobData.title || 'Unknown Position';
-          companyNameEl.textContent = currentJobData.company || 'Unknown Company';
-        }
+    collectBtn.disabled = false;
 
-        captureBtn.disabled = false;
-      } else {
-        updateStatus('warning', '⚠️', 'Could not detect job details. Try refreshing the page.');
-        jobDescSection.classList.remove('hidden');
-      }
-    } catch (e) {
-      // Content script might not be loaded yet
-      updateStatus('warning', '⚠️', 'Refresh the LinkedIn page and try again');
-      jobDescSection.classList.remove('hidden');
-    }
   } catch (error) {
-    console.error('Error checking page:', error);
-    updateStatus('warning', '⚠️', 'Unable to check page');
-    jobDescSection.classList.remove('hidden');
+    console.error('Error scanning tabs:', error);
+    showError('Failed to scan tabs: ' + error.message);
   }
-
-  updateButtonStates();
 }
 
-// Update status display
-function updateStatus(type, icon, text) {
-  pageStatus.className = `status ${type}`;
-  pageStatus.querySelector('.status-icon').textContent = icon;
-  pageStatus.querySelector('.status-text').textContent = text;
+// Display tabs with job info
+async function displayTabs() {
+  jobsContainer.innerHTML = '';
+
+  for (const tab of linkedInTabs) {
+    const jobItem = document.createElement('div');
+    jobItem.className = 'job-item';
+    jobItem.dataset.tabId = tab.id;
+
+    // Try to extract basic info from tab title
+    const titleParts = tab.title?.split(' | ') || [];
+    const jobTitle = titleParts[0] || 'LinkedIn Job';
+    const company = titleParts[1] || '';
+
+    jobItem.innerHTML = `
+      <input type="checkbox" checked data-tab-id="${tab.id}">
+      <div class="job-info">
+        <div class="job-title" title="${jobTitle}">${jobTitle}</div>
+        ${company ? `<div class="job-company">${company}</div>` : ''}
+      </div>
+    `;
+
+    jobsContainer.appendChild(jobItem);
+  }
 }
 
 // Setup event listeners
 function setupEventListeners() {
-  saveKeyBtn.addEventListener('click', saveApiKey);
+  collectBtn.addEventListener('click', collectAllJobs);
+  openClaudeBtn.addEventListener('click', openClaude);
+}
 
-  captureBtn.addEventListener('click', async () => {
-    if (currentJobData && currentJobData.description) {
-      jobDescTextarea.value = currentJobData.description;
-      jobDescSection.classList.remove('hidden');
-      updateButtonStates();
-      showSuccess('Job description captured!');
-    }
+// Collect job descriptions from all selected tabs
+async function collectAllJobs() {
+  const selectedTabs = [];
+  const checkboxes = jobsContainer.querySelectorAll('input[type="checkbox"]:checked');
+
+  checkboxes.forEach(cb => {
+    const tabId = parseInt(cb.dataset.tabId);
+    const tab = linkedInTabs.find(t => t.id === tabId);
+    if (tab) selectedTabs.push(tab);
   });
 
-  analyzeBtn.addEventListener('click', analyzeWithClaude);
-
-  jobDescTextarea.addEventListener('input', updateButtonStates);
-
-  apiKeyInput.addEventListener('input', updateButtonStates);
-}
-
-// Update button states based on current data
-function updateButtonStates() {
-  const hasApiKey = apiKeyInput.value.trim().length > 0;
-  const hasDescription = jobDescTextarea.value.trim().length > 0;
-
-  analyzeBtn.disabled = !hasApiKey || !hasDescription;
-}
-
-// Analyze job description with Claude
-async function analyzeWithClaude() {
-  const apiKey = apiKeyInput.value.trim();
-  const description = jobDescTextarea.value.trim();
-
-  if (!apiKey || !description) {
-    showError('API key and job description are required');
+  if (selectedTabs.length === 0) {
+    showError('No tabs selected');
     return;
   }
 
-  // Show loading state
-  loadingEl.classList.remove('hidden');
-  errorEl.classList.add('hidden');
-  analysisSection.classList.add('hidden');
-  analyzeBtn.disabled = true;
+  collectBtn.disabled = true;
+  collectBtn.innerHTML = '<span class="btn-icon">⏳</span> Collecting...';
 
   try {
-    const analysis = await callClaudeAPI(apiKey, description);
+    const jobDescriptions = [];
 
-    // Display results
-    analysisResult.innerHTML = formatAnalysis(analysis);
-    analysisSection.classList.remove('hidden');
+    for (const tab of selectedTabs) {
+      try {
+        // Inject content script and get job data
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: extractJobDataFromPage
+        });
 
-    // Save to history
-    await saveToHistory({
-      title: currentJobData?.title || 'Manual Entry',
-      company: currentJobData?.company || 'Unknown',
-      description: description,
-      analysis: analysis,
-      timestamp: new Date().toISOString()
-    });
+        if (results && results[0] && results[0].result) {
+          const data = results[0].result;
+          jobDescriptions.push({
+            title: data.title || 'Unknown Position',
+            company: data.company || 'Unknown Company',
+            location: data.location || '',
+            description: data.description || 'Could not extract description',
+            url: tab.url
+          });
+        }
+      } catch (e) {
+        console.error(`Failed to extract from tab ${tab.id}:`, e);
+        jobDescriptions.push({
+          title: tab.title?.split(' | ')[0] || 'Unknown',
+          company: tab.title?.split(' | ')[1] || 'Unknown',
+          description: 'Failed to extract - try refreshing this tab',
+          url: tab.url
+        });
+      }
+    }
+
+    // Format for Claude
+    const formattedText = formatForClaude(jobDescriptions);
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(formattedText);
+
+    // Show success
+    successMessage.classList.remove('hidden');
+    setTimeout(() => {
+      successMessage.classList.add('hidden');
+    }, 5000);
 
   } catch (error) {
-    console.error('Analysis error:', error);
-    showError(error.message || 'Failed to analyze job description');
+    console.error('Collection error:', error);
+    showError('Failed to collect jobs: ' + error.message);
   } finally {
-    loadingEl.classList.add('hidden');
-    updateButtonStates();
+    collectBtn.disabled = false;
+    collectBtn.innerHTML = '<span class="btn-icon">📋</span> Collect All & Copy to Clipboard';
   }
 }
 
-// Call Claude API
-async function callClaudeAPI(apiKey, jobDescription) {
-  const systemPrompt = `You are a career advisor analyzing job descriptions. Provide a concise, structured analysis including:
+// Format job descriptions for Claude
+function formatForClaude(jobs) {
+  let text = `I have ${jobs.length} job posting(s) from LinkedIn that I'd like you to analyze:\n\n`;
 
-1. **Role Summary**: 2-3 sentence overview of the position
-2. **Key Requirements**: Bullet list of must-have qualifications
-3. **Nice-to-Have Skills**: Secondary qualifications that would help
-4. **Technical Stack**: Technologies, tools, and platforms mentioned
-5. **Red Flags**: Any concerning aspects (unrealistic requirements, vague descriptions, etc.)
-6. **Salary Insight**: If mentioned, or market estimate based on role
-7. **Application Tips**: 2-3 specific suggestions for applying
-
-Be direct and practical. Focus on actionable insights.`;
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      messages: [
-        {
-          role: 'user',
-          content: `Please analyze this LinkedIn job description:\n\n${jobDescription}`
-        }
-      ],
-      system: systemPrompt
-    })
+  jobs.forEach((job, index) => {
+    text += `${'='.repeat(60)}\n`;
+    text += `JOB ${index + 1}: ${job.title}\n`;
+    text += `Company: ${job.company}\n`;
+    if (job.location) text += `Location: ${job.location}\n`;
+    text += `URL: ${job.url}\n`;
+    text += `${'='.repeat(60)}\n\n`;
+    text += `${job.description}\n\n`;
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `API error: ${response.status}`);
-  }
+  text += `\n${'='.repeat(60)}\n`;
+  text += `Please analyze these job postings and help me understand:\n`;
+  text += `1. Key requirements and qualifications for each role\n`;
+  text += `2. Common themes or skills across these positions\n`;
+  text += `3. Which roles might be the best fit based on typical career paths\n`;
+  text += `4. Any red flags or things to watch out for\n`;
 
-  const data = await response.json();
-  return data.content[0].text;
+  return text;
 }
 
-// Format analysis for display
-function formatAnalysis(text) {
-  // Convert markdown-style formatting to HTML
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^### (.*$)/gm, '<h4>$1</h4>')
-    .replace(/^## (.*$)/gm, '<h4>$1</h4>')
-    .replace(/^# (.*$)/gm, '<h4>$1</h4>')
-    .replace(/^\* (.*$)/gm, '<li>$1</li>')
-    .replace(/^- (.*$)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/<\/li>\n<li>/g, '</li><li>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
+// Open Claude chat
+function openClaude() {
+  chrome.tabs.create({ url: 'https://claude.ai/new' });
 }
 
-// Save analysis to history
-async function saveToHistory(entry) {
-  const result = await chrome.storage.local.get(['jobHistory']);
-  const history = result.jobHistory || [];
-  history.unshift(entry);
-
-  // Keep only last 50 entries
-  if (history.length > 50) {
-    history.pop();
-  }
-
-  await chrome.storage.local.set({ jobHistory: history });
+// Update status display
+function updateStatus(icon, text) {
+  pageStatus.className = 'status';
+  pageStatus.querySelector('.status-icon').textContent = icon;
+  pageStatus.querySelector('.status-text').textContent = text;
 }
 
-// Show error message
+// Show error
 function showError(message) {
   errorEl.textContent = message;
   errorEl.classList.remove('hidden');
-  setTimeout(() => {
-    errorEl.classList.add('hidden');
-  }, 5000);
+  setTimeout(() => errorEl.classList.add('hidden'), 5000);
 }
 
-// Show success message
-function showSuccess(message) {
-  updateStatus('success', '✓', message);
-  setTimeout(() => {
-    checkCurrentPage();
-  }, 2000);
+// Function to be injected into LinkedIn pages
+function extractJobDataFromPage() {
+  const data = {
+    title: null,
+    company: null,
+    location: null,
+    description: null
+  };
+
+  // Job title selectors
+  const titleSelectors = [
+    '.job-details-jobs-unified-top-card__job-title h1',
+    '.jobs-unified-top-card__job-title',
+    '.t-24.t-bold.jobs-unified-top-card__job-title',
+    'h1.topcard__title',
+    '.job-view-layout h1',
+    'h1[class*="job-title"]'
+  ];
+
+  for (const sel of titleSelectors) {
+    const el = document.querySelector(sel);
+    if (el?.textContent?.trim()) {
+      data.title = el.textContent.trim();
+      break;
+    }
+  }
+
+  // Company selectors
+  const companySelectors = [
+    '.job-details-jobs-unified-top-card__company-name a',
+    '.job-details-jobs-unified-top-card__company-name',
+    '.jobs-unified-top-card__company-name a',
+    '.jobs-unified-top-card__company-name',
+    '.topcard__org-name-link'
+  ];
+
+  for (const sel of companySelectors) {
+    const el = document.querySelector(sel);
+    if (el?.textContent?.trim()) {
+      data.company = el.textContent.trim();
+      break;
+    }
+  }
+
+  // Location selectors
+  const locationSelectors = [
+    '.job-details-jobs-unified-top-card__primary-description-container .t-black--light',
+    '.jobs-unified-top-card__bullet',
+    '.topcard__flavor--bullet'
+  ];
+
+  for (const sel of locationSelectors) {
+    const el = document.querySelector(sel);
+    if (el?.textContent?.trim()) {
+      data.location = el.textContent.trim();
+      break;
+    }
+  }
+
+  // Description selectors
+  const descSelectors = [
+    '.jobs-description__content',
+    '.jobs-description-content__text',
+    '.jobs-box__html-content',
+    '#job-details',
+    '.jobs-description',
+    '.show-more-less-html__markup'
+  ];
+
+  for (const sel of descSelectors) {
+    const el = document.querySelector(sel);
+    if (el) {
+      // Clean text
+      const clone = el.cloneNode(true);
+      clone.querySelectorAll('script, style, button').forEach(e => e.remove());
+
+      let text = '';
+      function processNode(node) {
+        if (node.nodeType === 3) {
+          text += node.textContent;
+        } else if (node.nodeType === 1) {
+          const tag = node.tagName.toLowerCase();
+          if (['p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'h4'].includes(tag)) text += '\n';
+          if (tag === 'li') text += '• ';
+          node.childNodes.forEach(processNode);
+          if (['p', 'div', 'ul', 'ol'].includes(tag)) text += '\n';
+        }
+      }
+      processNode(clone);
+
+      data.description = text
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+
+      if (data.description.length > 100) break;
+    }
+  }
+
+  return data;
 }

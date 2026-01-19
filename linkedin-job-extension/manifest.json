@@ -5,11 +5,13 @@
   "description": "Capture LinkedIn job descriptions and analyze them with Claude AI",
   "permissions": [
     "activeTab",
+    "tabs",
+    "scripting",
+    "clipboardWrite",
     "storage"
   ],
   "host_permissions": [
-    "https://www.linkedin.com/*",
-    "https://api.anthropic.com/*"
+    "https://www.linkedin.com/*"
   ],
   "action": {
     "default_popup": "popup.html"
