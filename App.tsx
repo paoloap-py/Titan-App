@@ -360,13 +360,61 @@ const App: React.FC = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const [githubSettingsLoaded, setGithubSettingsLoaded] = useState(false);
+
   // Load GitHub settings from localStorage on mount
   useEffect(() => {
     const savedToken = localStorage.getItem('titan_github_token');
     const savedGistId = localStorage.getItem('titan_gist_id');
     if (savedToken) setGithubToken(savedToken);
     if (savedGistId) setGistId(savedGistId);
+    setGithubSettingsLoaded(true);
   }, []);
+
+  // Auto-load from cloud if no local data but GitHub is configured
+  useEffect(() => {
+    const autoLoadFromCloud = async () => {
+      if (!hasLoaded || !githubSettingsLoaded) return;
+      if (sessions.length > 0) return; // Already have local data
+      if (!githubToken || !gistId) return; // No GitHub config
+
+      console.log('TITAN 133: Auto-loading from cloud...');
+      setSyncStatus('syncing');
+      try {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: { 'Authorization': `token ${githubToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load Gist');
+
+        const gistData = await response.json();
+        const content = gistData.files['titan-workout-data.json']?.content;
+
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.sessions && Array.isArray(parsed.sessions) && parsed.sessions.length > 0) {
+            const sortedSessions = sortSessionsByDate(parsed.sessions);
+            setSessions(sortedSessions);
+            localStorage.setItem('titan_data', JSON.stringify({
+              sessions: sortedSessions,
+              alerts: [],
+              currentSession: null
+            }));
+            console.log(`TITAN 133: Auto-loaded ${sortedSessions.length} sessions from cloud`);
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus('idle'), 3000);
+            return;
+          }
+        }
+        setSyncStatus('idle');
+      } catch (error) {
+        console.error('Auto-load from cloud error:', error);
+        setSyncStatus('idle');
+      }
+    };
+
+    autoLoadFromCloud();
+  }, [hasLoaded, githubSettingsLoaded, githubToken, gistId]);
 
   // Save GitHub token to localStorage
   const saveGithubToken = (token: string) => {
@@ -445,9 +493,10 @@ const App: React.FC = () => {
       if (content) {
         const parsed = JSON.parse(content);
         if (parsed.sessions && Array.isArray(parsed.sessions)) {
-          setSessions(parsed.sessions);
+          const sortedSessions = sortSessionsByDate(parsed.sessions);
+          setSessions(sortedSessions);
           localStorage.setItem('titan_data', JSON.stringify({
-            sessions: parsed.sessions,
+            sessions: sortedSessions,
             alerts: [],
             currentSession: null
           }));
@@ -1129,31 +1178,44 @@ const App: React.FC = () => {
                   className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:border-slate-600 mb-2"
                 />
                 {githubToken && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => syncToGist(sessions)}
-                      disabled={syncStatus === 'syncing'}
-                      className="flex-1 bg-slate-800 text-white px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700 disabled:opacity-50"
-                    >
-                      <Save className="w-3 h-3" /> Sync Now
-                    </button>
-                    {gistId && (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Gist ID (for restoring on new device)"
+                      value={gistId}
+                      onChange={(e) => {
+                        const newGistId = e.target.value.trim();
+                        setGistId(newGistId);
+                        if (newGistId) localStorage.setItem('titan_gist_id', newGistId);
+                      }}
+                      className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:border-slate-600 mb-2 font-mono"
+                    />
+                    <div className="flex gap-2">
                       <button
-                        onClick={loadFromGist}
+                        onClick={() => syncToGist(sessions)}
                         disabled={syncStatus === 'syncing'}
                         className="flex-1 bg-slate-800 text-white px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700 disabled:opacity-50"
                       >
-                        <Download className="w-3 h-3" /> Load from Cloud
+                        <Save className="w-3 h-3" /> Sync Now
                       </button>
-                    )}
-                  </div>
+                      {gistId && (
+                        <button
+                          onClick={loadFromGist}
+                          disabled={syncStatus === 'syncing'}
+                          className="flex-1 bg-slate-800 text-white px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-slate-700 disabled:opacity-50"
+                        >
+                          <Download className="w-3 h-3" /> Load from Cloud
+                        </button>
+                      )}
+                    </div>
+                  </>
                 )}
                 <p className="text-[10px] text-slate-600 mt-2">
                   {githubToken
                     ? gistId
-                      ? 'Auto-syncs on session complete'
-                      : 'Click "Sync Now" to create backup'
-                    : 'Paste token with "gist" scope for auto-sync'}
+                      ? 'Auto-syncs on session complete. Auto-loads on new device.'
+                      : 'Enter your Gist ID to restore, or "Sync Now" to create new backup'
+                    : 'Paste token with "gist" scope for cloud sync'}
                 </p>
               </div>
             </div>
