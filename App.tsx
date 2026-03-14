@@ -382,7 +382,7 @@ const App: React.FC = () => {
       setSyncStatus('syncing');
       try {
         const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-          headers: { 'Authorization': `token ${githubToken}` }
+          headers: { 'Authorization': `Bearer ${githubToken}` }
         });
 
         if (!response.ok) throw new Error('Failed to load Gist');
@@ -435,7 +435,7 @@ const App: React.FC = () => {
         const response = await fetch(`https://api.github.com/gists/${gistId}`, {
           method: 'PATCH',
           headers: {
-            'Authorization': `token ${githubToken}`,
+            'Authorization': `Bearer ${githubToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -449,7 +449,7 @@ const App: React.FC = () => {
         const response = await fetch('https://api.github.com/gists', {
           method: 'POST',
           headers: {
-            'Authorization': `token ${githubToken}`,
+            'Authorization': `Bearer ${githubToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -482,7 +482,7 @@ const App: React.FC = () => {
     setSyncStatus('syncing');
     try {
       const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-        headers: { 'Authorization': `token ${githubToken}` }
+        headers: { 'Authorization': `Bearer ${githubToken}` }
       });
 
       if (!response.ok) throw new Error('Failed to load Gist');
