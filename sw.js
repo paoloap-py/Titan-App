@@ -1,4 +1,4 @@
-const CACHE_NAME = 'titan-v7';
+const CACHE_NAME = 'titan-v8';
 
 // On install, skip waiting to ensure the new service worker takes over immediately
 self.addEventListener('install', (event) => {
