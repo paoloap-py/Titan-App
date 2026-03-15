@@ -94,9 +94,9 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
   {
     id: 'bodytrainer',
     name: 'Bodytrainer',
-    description: '160 sets per week. Push/Pull/Legs. 6-day split.',
+    description: '162 sets per week. Push/Pull/Legs + Arms. 6-day split.',
     accentColor: '#dc2626',
-    weeklySetTarget: 160,
+    weeklySetTarget: 162,
     rules: [
       'Enforce mechanical tension (Tonnage)',
       '0-1 RPE intensity',
@@ -136,26 +136,28 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
           "Face Pulls: 3 x 12–15 ⏳",
           "Bayesian Cable Curl: 3 x 10–12 ⚓",
           "Machine Preacher Curl: 3 x 8–10 ⏳⚓",
+          "Seated Calf Raise: 2 x 12–15 ⏳",
           "Dragon Flag: 3 x Failure"
         ]
       },
       {
         day: 3,
-        name: "Legs #1 + Core",
-        targetDuration: 100,
+        name: "Legs",
+        targetDuration: 105,
         warmup: ["Leg Swings", "BW Lunges", "Cossack Squats", "Glute Bridges"],
         stretching: ["Pigeon Pose (60s)", "Couch Stretch (60s)", "Calf Stretch (60s)"],
         exercises: [
           "Super Hack Squat: 3 x 6–8 ⚓⏱️",
           "Super Pendulum Squat: 3 x 8–10 ⏱️",
           "Walking Lunges: 3 x 10/leg ⏱️",
+          "Alternate Leg Extension: 2 x 12–15 🏳️⚓",
           "RDL: 3 x 8–10 🎗️⚓⏱️",
           "Kneeling Leg Curl: 3 x 10–12 🏳️",
           "Standard Hip Thrust: 3 x 10–12 🛑",
           "Standing Abductor: 2 x 12–15",
+          "Loaded Back Extension: 3 x 12–15",
           "Seated Calf Raise: 3 x 12–15 ⏳",
-          "Cable Crunch: 2 x 12–15 ⏳",
-          "Cable Twist: 2 x 12–15"
+          "Standing Calf Raise: 3 x 12–15 ⏳"
         ]
       },
       {
@@ -198,22 +200,20 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
       },
       {
         day: 6,
-        name: "Legs #2 + Arms",
-        targetDuration: 100,
-        warmup: ["Leg Swings", "BW Lunges", "Glute Bridges", "Light Banded Curls"],
-        stretching: ["Pigeon Pose (60s)", "Couch Stretch (60s)", "Calf Stretch (60s)"],
+        name: "Arms + Core",
+        targetDuration: 80,
+        warmup: ["Band Pull-Aparts", "Light Banded Curls", "Wrist Circles", "Cat-Cow"],
+        stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)", "Child's Pose (60s)"],
         exercises: [
-          "Super Leg Press 45° Dual System: 3 x 10–12 ⏱️",
-          "Bulgarian Split Squat: 3 x 8–10 ⏱️",
-          "Seated Leg Curl: 3 x 10–12 🏳️",
-          "Alternate Leg Extension: 2 x 12–15 🏳️⚓",
-          "Loaded Back Extension: 3 x 12–15",
-          "Standing Calf Raise: 3 x 12–15 ⏳",
+          "Bayesian Cable Curl: 3 x 10–12 ⚓",
           "Incline Dumbbell Curl: 3 x 10–12 ⚓",
           "Reverse EZ-Bar Curl: 2 x 12–15",
           "Super French Press Machine: 3 x 10–12 ⏳⚓",
-          "Dragon Flag: 2 x Failure",
-          "Wrist Curl: 2 x 15–20"
+          "Overhead Cable Extension: 3 x 10–12 ⏳⚓🎗️",
+          "Wrist Curl: 2 x 15–20",
+          "Dragon Flag: 3 x Failure",
+          "Cable Crunch: 2 x 12–15 ⏳",
+          "Cable Twist: 2 x 12–15"
         ]
       }
     ]
@@ -346,6 +346,16 @@ const App: React.FC = () => {
   const [githubToken, setGithubToken] = useState<string>('');
   const [gistId, setGistId] = useState<string>('');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [activeProtocolId, setActiveProtocolId] = useState<string>(() => {
+    return localStorage.getItem('titan_active_protocol') || 'bodytrainer';
+  });
+
+  const activeProtocol = DEFAULT_PROTOCOLS.find(p => p.id === activeProtocolId) || activeProtocol;
+
+  const switchProtocol = (protocolId: string) => {
+    setActiveProtocolId(protocolId);
+    localStorage.setItem('titan_active_protocol', protocolId);
+  };
 
   // Timer effect - updates elapsed time every second when session is active
   useEffect(() => {
@@ -623,7 +633,7 @@ const App: React.FC = () => {
   // Get target duration in seconds for current session
   const getTargetDuration = (): number => {
     if (!currentSession) return 0;
-    const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+    const day = activeProtocol.days.find(d => d.day === currentSession.day);
     return (day?.targetDuration || 90) * 60; // Convert minutes to seconds
   };
 
@@ -725,14 +735,14 @@ const App: React.FC = () => {
   };
 
   const handleStartSession = (dayNum: number) => {
-    const protocol = DEFAULT_PROTOCOLS[0];
+    const protocol = activeProtocol;
     const day = protocol.days.find(d => d.day === dayNum);
     if (!day) return;
 
     const newSession: WorkoutSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      week: Math.floor(sessions.length / DEFAULT_PROTOCOLS[0].days.length) + 1,
+      week: Math.floor(sessions.length / activeProtocol.days.length) + 1,
       day: dayNum,
       protocolId: protocol.id,
       warmupCompleted: new Array(day.warmup?.length || 0).fill(false),
@@ -1018,7 +1028,7 @@ const App: React.FC = () => {
             const lastSession = sessions[0]; // Sessions are sorted newest first
             const lastDay = lastSession.day;
 
-            const totalDays = DEFAULT_PROTOCOLS[0].days.length;
+            const totalDays = activeProtocol.days.length;
             // If last session was the final day, check if it was today (rest day)
             if (lastDay === totalDays) {
               const lastDate = new Date(lastSession.date);
@@ -1030,7 +1040,7 @@ const App: React.FC = () => {
             return lastDay >= totalDays ? 1 : lastDay + 1;
           };
           const todayWorkoutDay = getNextWorkoutDay();
-          const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
+          const todayProtocol = todayWorkoutDay ? activeProtocol.days.find(d => d.day === todayWorkoutDay) : null;
           const isRestDay = todayWorkoutDay === null;
 
           // Calculate sessions this week (Monday to Sunday)
@@ -1095,7 +1105,7 @@ const App: React.FC = () => {
                   <div className="flex-1">
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider bg-orange-600 text-white">Active</span>
                     <h3 className="text-xl font-black text-white italic uppercase mt-1">
-                      {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
+                      {activeProtocol.days.find(d => d.day === currentSession.day)?.name}
                     </h3>
                   </div>
                   <div className="flex gap-2">
@@ -1169,7 +1179,7 @@ const App: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEFAULT_PROTOCOLS[0].days.map(day => {
+              {activeProtocol.days.map(day => {
                 const isToday = day.day === todayWorkoutDay;
                 return (
                   <button
@@ -1191,6 +1201,27 @@ const App: React.FC = () => {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Protocol Switcher */}
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-3">Training Program</h3>
+              <div className="flex gap-2">
+                {DEFAULT_PROTOCOLS.map(protocol => (
+                  <button
+                    key={protocol.id}
+                    onClick={() => switchProtocol(protocol.id)}
+                    className={`flex-1 px-3 py-3 rounded-xl font-black uppercase text-xs tracking-wider transition-all active:scale-95 ${
+                      activeProtocolId === protocol.id
+                        ? 'bg-red-600 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    {protocol.name}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-600 mt-2">{activeProtocol.description}</p>
             </div>
 
             {/* Backup/Restore Section */}
@@ -1281,7 +1312,7 @@ const App: React.FC = () => {
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 flex justify-between items-center shadow-2xl">
               <div>
                 <h2 className="text-2xl font-black italic uppercase text-white">
-                  {DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day)?.name}
+                  {activeProtocol.days.find(d => d.day === currentSession.day)?.name}
                 </h2>
                 <p className="text-xs font-black text-red-500 uppercase tracking-widest mt-1">Real-time Persistence Active</p>
               </div>
@@ -1290,7 +1321,7 @@ const App: React.FC = () => {
 
             {/* Warmup Section - Single checkbox */}
             {(() => {
-              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find(d => d.day === currentSession.day);
               if (!day?.warmup?.length) return null;
               const allCompleted = currentSession.warmupCompleted?.every(c => c);
               const toggleAllWarmup = () => {
@@ -1421,7 +1452,7 @@ const App: React.FC = () => {
 
             {/* Post-Workout Stretching Section - Single checkbox */}
             {(() => {
-              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find(d => d.day === currentSession.day);
               if (!day?.stretching?.length) return null;
               const allCompleted = currentSession.stretchingCompleted?.every(c => c);
               const toggleAllStretching = () => {
@@ -1513,7 +1544,7 @@ const App: React.FC = () => {
               const projected = getProjectedTime();
               const projectedColor = getProjectedColor(projected, targetSeconds);
               const progressPercent = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
-              const day = DEFAULT_PROTOCOLS[0].days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find(d => d.day === currentSession.day);
               const targetMinutes = day?.targetDuration || 90;
               const circumference = 2 * Math.PI * 30; // r=30
               const offset = circumference * (1 - (elapsedSeconds / targetSeconds));
