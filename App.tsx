@@ -41,7 +41,8 @@ import {
   WorkoutSession, 
   ExerciseEntry, 
   ExerciseSet, 
-  Protocol, 
+  Protocol,
+  ProtocolDay,
   UserSettings, 
   BodyWeight,
   Alert
@@ -412,7 +413,7 @@ const App: React.FC = () => {
     return localStorage.getItem('titan_active_protocol') || 'bodytrainer';
   });
 
-  const activeProtocol = DEFAULT_PROTOCOLS.find(p => p.id === activeProtocolId) || activeProtocol;
+  const activeProtocol: Protocol = DEFAULT_PROTOCOLS.find(p => p.id === activeProtocolId) || DEFAULT_PROTOCOLS[0];
 
   const switchProtocol = (protocolId: string) => {
     setActiveProtocolId(protocolId);
@@ -695,7 +696,7 @@ const App: React.FC = () => {
   // Get target duration in seconds for current session
   const getTargetDuration = (): number => {
     if (!currentSession) return 0;
-    const day = activeProtocol.days.find(d => d.day === currentSession.day);
+    const day = activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day);
     return (day?.targetDuration || 90) * 60; // Convert minutes to seconds
   };
 
@@ -799,7 +800,7 @@ const App: React.FC = () => {
 
   const handleStartSession = (dayNum: number) => {
     const protocol = activeProtocol;
-    const day = protocol.days.find(d => d.day === dayNum);
+    const day = protocol.days.find((d: ProtocolDay) => d.day === dayNum);
     if (!day) return;
 
     const newSession: WorkoutSession = {
@@ -811,7 +812,7 @@ const App: React.FC = () => {
       warmupCompleted: new Array(day.warmup?.length || 0).fill(false),
       stretchingCompleted: new Array(day.stretching?.length || 0).fill(false),
       cardioCompleted: false,
-      exercises: day.exercises.map(exName => {
+      exercises: day.exercises.map((exName: string) => {
         const parts = exName.split(':');
         const name = parts[0].trim();
         const config = parts[1]?.trim() || '';
@@ -1123,7 +1124,7 @@ const App: React.FC = () => {
             return lastDay >= totalDays ? 1 : lastDay + 1;
           };
           const todayWorkoutDay = getNextWorkoutDay();
-          const todayProtocol = todayWorkoutDay ? activeProtocol.days.find(d => d.day === todayWorkoutDay) : null;
+          const todayProtocol = todayWorkoutDay ? activeProtocol.days.find((d: ProtocolDay) => d.day === todayWorkoutDay) : null;
           const isRestDay = todayWorkoutDay === null;
 
           // Calculate sessions this week (Monday to Sunday)
@@ -1206,7 +1207,7 @@ const App: React.FC = () => {
                   <div className="flex-1">
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider bg-orange-600 text-white">Active</span>
                     <h3 className="text-xl font-black text-white italic uppercase mt-1">
-                      {activeProtocol.days.find(d => d.day === currentSession.day)?.name}
+                      {activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day)?.name}
                     </h3>
                   </div>
                   <div className="flex gap-2">
@@ -1280,7 +1281,7 @@ const App: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeProtocol.days.map(day => {
+              {activeProtocol.days.map((day: ProtocolDay) => {
                 const isToday = day.day === todayWorkoutDay;
                 return (
                   <button
@@ -1393,7 +1394,7 @@ const App: React.FC = () => {
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 flex justify-between items-center shadow-2xl">
               <div>
                 <h2 className="text-2xl font-black italic uppercase text-white">
-                  {activeProtocol.days.find(d => d.day === currentSession.day)?.name}
+                  {activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day)?.name}
                 </h2>
                 <p className="text-xs font-black text-red-500 uppercase tracking-widest mt-1">Real-time Persistence Active</p>
               </div>
@@ -1402,7 +1403,7 @@ const App: React.FC = () => {
 
             {/* Warmup Section - Single checkbox */}
             {(() => {
-              const day = activeProtocol.days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day);
               if (!day?.warmup?.length) return null;
               const allCompleted = currentSession.warmupCompleted?.every(c => c);
               const toggleAllWarmup = () => {
@@ -1562,7 +1563,7 @@ const App: React.FC = () => {
 
             {/* Post-Workout Stretching Section - Single checkbox */}
             {(() => {
-              const day = activeProtocol.days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day);
               if (!day?.stretching?.length) return null;
               const allCompleted = currentSession.stretchingCompleted?.every(c => c);
               const toggleAllStretching = () => {
@@ -1654,7 +1655,7 @@ const App: React.FC = () => {
               const projected = getProjectedTime();
               const projectedColor = getProjectedColor(projected, targetSeconds);
               const progressPercent = Math.min(100, (elapsedSeconds / targetSeconds) * 100);
-              const day = activeProtocol.days.find(d => d.day === currentSession.day);
+              const day = activeProtocol.days.find((d: ProtocolDay) => d.day === currentSession.day);
               const targetMinutes = day?.targetDuration || 90;
               const circumference = 2 * Math.PI * 30; // r=30
               const offset = circumference * (1 - (elapsedSeconds / targetSeconds));
