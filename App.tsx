@@ -25,7 +25,8 @@ import {
   Save,
   Accessibility,
   Play,
-  Timer
+  Timer,
+  ArrowLeftRight
 } from 'lucide-react';
 import {
   CartesianGrid,
@@ -47,6 +48,66 @@ import {
 } from './types';
 import { getBodyHighlighterMuscles } from './muscleMapping';
 import * as gemini from './services/geminiService';
+
+// Exercise library for swapping exercises
+const EXERCISE_LIBRARY: Record<string, string[]> = {
+  'Chest': [
+    'Bench Press', 'Incline Bench Press', 'Flat Dumbbell Press', 'Incline Dumbbell Press',
+    'Smith Machine Press', 'Cable Crossovers', 'Pec Deck Machine', 'Dumbbell Fly',
+    'Cable Press Around', 'Deficit Push-ups', 'Guillotine Press Dumbbells',
+    'Decline Bench Press', 'Decline Dumbbell Press', 'Banded Push-ups'
+  ],
+  'Back': [
+    'Neutral Grip Lat Pulldown', 'Meadows Row', 'Cable Row Wide Grip',
+    'Wide Grip Pull-up', 'Neutral Grip Pull-up', 'Cross Body Lat Pull Around',
+    'Deficit Pendlay Row', '1-Arm Dumbbell Row', 'Croc Row',
+    'Cable Lat Pullover', 'Dumbbell Lat Pullover', 'Super Pullover Machine',
+    'Chin-up', 'Barbell Row', 'Pendlay Row', 'T-Bar Row Freestanding', 'Face Pull Standing'
+  ],
+  'Shoulders — Side Delts': [
+    'Lateral Deltoids Machine', 'Lean-in Dumbbell Lateral Raise',
+    'Arnold Side-Lying DB Raise', 'Standing Dumbbell Lateral Raise',
+    'Leaning Away DB Lateral Raise', 'Super ROM Lateral Raise',
+    'Seated Machine Lateral Raise', 'Upright Row'
+  ],
+  'Shoulders — Rear Delts': [
+    'Reverse Pec Deck Standard', 'Bent Over Reverse DB Fly'
+  ],
+  'Shoulders — Front Delts': [
+    'Dumbbell Shoulder Press', 'Standing Barbell OHP', 'Seated Barbell OHP'
+  ],
+  'Biceps': [
+    'Preacher Curl 45°', 'Dumbbell Curl Standing', 'Lying Dumbbell Curl',
+    'Cable Curl Standard', 'Lying Bayesian Cable Curl', 'Hammer Curl Dumbbell',
+    'Inverse Zottman Curl', 'Cheat Curl', 'Strict Curl', 'Modified 21s',
+    'Barbell Curl', 'Flat Bench Curl'
+  ],
+  'Triceps': [
+    'Skull Crushers EZ Bar', 'Overhead Cable Extension Rope', 'Bar Press Down',
+    'Katana Extension', 'One Arm DB Overhead Extension', 'Dumbbell Skull Crushers',
+    'Close Grip Bench Press', 'Smith Machine JM Press', 'Rope Press Down',
+    'Dumbbell French Press Seated', 'JM Press Barbell', 'Close Grip Dips',
+    'Machine Dips', 'Diamond Push-ups'
+  ],
+  'Quads': [
+    'Barbell Back Squat High Bar', 'Smith Machine Squat', 'Bulgarian Split Squat',
+    'Barbell Front Squat', 'Low Bar Back Squat', '45° Leg Press',
+    'Reverse Nordic', 'Lunge', 'Sissy Squat', 'Goblet Squat'
+  ],
+  'Hamstrings': [
+    'Seated Leg Curl', 'Lying Leg Curl'
+  ],
+  'Glutes': [
+    'Elevated Front Foot Lunge', 'Single Leg DB Hip Thrust',
+    'Barbell Squat for Glutes', 'Smith Machine Squat for Glutes',
+    'Bulgarian Split Squat for Glutes', 'Smith Machine Lunge',
+    'Hip Kickbacks', 'Step-Ups', 'Reverse Hyperextension',
+    'Barbell Hip Thrust', 'Sumo Deadlift', 'Glute Bridge',
+    'Cable Hip Abduction', 'Curtsy Lunge', 'Conventional Deadlift', 'Cable Pull-Through'
+  ],
+  'Forearms': ['Dead Hang'],
+  'Core': ['Hanging Leg Raises', 'Hanging Corner Raises']
+};
 
 // User bodyweight for bodyweight exercises
 const USER_BODYWEIGHT = 85;
@@ -341,6 +402,7 @@ const App: React.FC = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerExpanded, setTimerExpanded] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
   const [restTimer, setRestTimer] = useState<number>(0);
   const [restTimerEndTime, setRestTimerEndTime] = useState<number | null>(null);
   const [githubToken, setGithubToken] = useState<string>('');
@@ -871,6 +933,26 @@ const App: React.FC = () => {
     setCurrentSession(updatedSession);
   };
 
+  const swapExercise = (exId: string, newName: string) => {
+    if (!currentSession) return;
+    const updatedExercises = currentSession.exercises.map(ex => {
+      if (ex.id !== exId) return ex;
+      const isBW = isBodyweightExercise(newName);
+      const defaultWeight = isBW ? USER_BODYWEIGHT : 0;
+      const lastExercise = getLastSessionExercise(newName);
+      const lastWeight = lastExercise?.sets[0]?.weight || defaultWeight;
+      return {
+        ...ex,
+        name: newName,
+        sets: ex.sets.map(set => ({ ...set, weight: lastWeight, reps: parseMinReps(ex.targetRepRange), completed: false }))
+      };
+    });
+    const updatedSession = { ...currentSession, exercises: updatedExercises };
+    saveSessionNow(updatedSession);
+    setCurrentSession(updatedSession);
+    setSwapExerciseId(null);
+  };
+
   const removeSet = (exId: string) => {
     if (!currentSession) return;
     const updatedExercises = currentSession.exercises.map(ex => {
@@ -1362,11 +1444,18 @@ const App: React.FC = () => {
                 return (
                   <div key={ex.id} className={`bg-slate-900 border rounded-[2rem] overflow-hidden transition-all duration-500 ${hasPR ? 'border-yellow-500/50' : isComplete ? 'border-green-500/30' : 'border-slate-800'}`}>
                     <div className="p-6 border-b border-slate-800/50 flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl font-black text-white uppercase italic tracking-tight">{ex.name}</h3>
                           {hasPR && <Trophy className="w-5 h-5 text-yellow-500" />}
                           {isComplete && !hasPR && <Check className="w-5 h-5 text-green-500" />}
+                          <button
+                            onClick={() => setSwapExerciseId(swapExerciseId === ex.id ? null : ex.id)}
+                            className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all active:scale-90"
+                            title="Swap exercise"
+                          >
+                            <ArrowLeftRight className="w-4 h-4" />
+                          </button>
                         </div>
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md uppercase tracking-wider">{ex.targetRepRange} Reps</span>
@@ -1380,6 +1469,28 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Swap Exercise Panel */}
+                    {swapExerciseId === ex.id && (
+                      <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 max-h-64 overflow-y-auto">
+                        {Object.entries(EXERCISE_LIBRARY).map(([group, exercises]) => (
+                          <div key={group} className="mb-3">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{group}</p>
+                            <div className="flex flex-wrap gap-1">
+                              {exercises.map(name => (
+                                <button
+                                  key={name}
+                                  onClick={() => swapExercise(ex.id, name)}
+                                  className="text-[11px] font-bold bg-slate-800 text-slate-300 px-2 py-1 rounded-lg hover:bg-red-600 hover:text-white transition-all active:scale-95"
+                                >
+                                  {name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="p-6 space-y-3">
                       {ex.sets.map((set, i) => {
