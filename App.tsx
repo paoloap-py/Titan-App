@@ -637,18 +637,19 @@ const App: React.FC = () => {
     return (day?.targetDuration || 90) * 60; // Convert minutes to seconds
   };
 
-  // Calculate projected time based on progress
+  // Calculate projected total session time based on set-level progress
   const getProjectedTime = (): number | null => {
     if (!currentSession) return null;
 
-    const completedExercises = currentSession.exercises.filter(ex =>
-      ex.sets.every(set => set.reps > 0)
-    ).length;
-    const totalExercises = currentSession.exercises.length;
+    const completedSets = currentSession.exercises.reduce((count, ex) =>
+      count + ex.sets.filter(set => set.completed).length, 0);
+    const totalSets = currentSession.exercises.reduce((count, ex) =>
+      count + Math.max(ex.sets.length, ex.plannedSets || ex.sets.length), 0);
 
-    if (completedExercises === 0) return null;
+    if (completedSets === 0) return null;
 
-    return Math.round(elapsedSeconds * (totalExercises / completedExercises));
+    const progress = completedSets / totalSets;
+    return Math.round(elapsedSeconds / progress);
   };
 
   // Get color for projected time
