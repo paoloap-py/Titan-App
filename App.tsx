@@ -1057,7 +1057,8 @@ const App: React.FC = () => {
             const startDate = new Date(now);
             startDate.setDate(startDate.getDate() - targetDays);
             const sessionsInPeriod = sessions.filter(s => new Date(s.date) >= startDate).length;
-            const targetSessions = targetDays === 15 ? 11 : targetDays === 30 ? 22 : targetDays === 60 ? 43 : 65; // ~5 sessions/week
+            const sessionsPerWeek = activeProtocol.days.length;
+            const targetSessions = Math.round((targetDays / 7) * sessionsPerWeek);
             const percentage = Math.min(100, Math.round((sessionsInPeriod / targetSessions) * 100));
             return { days: sessionsInPeriod, target: targetSessions, percentage };
           };
@@ -1073,16 +1074,33 @@ const App: React.FC = () => {
             const firstSessionDate = new Date(Math.min(...sessions.map(s => new Date(s.date).getTime())));
             const daysSinceFirst = Math.max(7, Math.ceil((now.getTime() - firstSessionDate.getTime()) / (1000 * 60 * 60 * 24)));
             const weeksSinceFirst = daysSinceFirst / 7;
-            return Math.round(weeksSinceFirst * 5); // ~5 sessions per week
+            return Math.round(weeksSinceFirst * activeProtocol.days.length);
           };
           const totalSessionsTarget = getTotalSessionsTarget();
 
           return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {/* Protocol Switcher */}
+            <div className="flex gap-2">
+              {DEFAULT_PROTOCOLS.map(protocol => (
+                <button
+                  key={protocol.id}
+                  onClick={() => switchProtocol(protocol.id)}
+                  className={`flex-1 px-3 py-2 rounded-xl font-black uppercase text-xs tracking-wider transition-all active:scale-95 ${
+                    activeProtocolId === protocol.id
+                      ? 'bg-red-600 text-white'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  {protocol.name}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               {[
                 { label: 'Total Sessions', val: `${sessions.length}/${totalSessionsTarget}`, icon: Activity, color: 'text-green-400', blink: false, clickable: false },
-                { label: 'This Week', val: `${sessionsThisWeek}/5`, icon: Flame, color: 'text-orange-500', blink: false, clickable: false },
+                { label: 'This Week', val: `${sessionsThisWeek}/${activeProtocol.days.length}`, icon: Flame, color: 'text-orange-500', blink: false, clickable: false },
                 { label: 'Today', val: isRestDay ? 'Rest' : todayProtocol?.name || '-', icon: Zap, color: 'text-red-500', blink: !isRestDay, clickable: !isRestDay && todayWorkoutDay !== null },
               ].map((kpi, i) => (
                 <div
@@ -1203,26 +1221,6 @@ const App: React.FC = () => {
               })}
             </div>
 
-            {/* Protocol Switcher */}
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl">
-              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-3">Training Program</h3>
-              <div className="flex gap-2">
-                {DEFAULT_PROTOCOLS.map(protocol => (
-                  <button
-                    key={protocol.id}
-                    onClick={() => switchProtocol(protocol.id)}
-                    className={`flex-1 px-3 py-3 rounded-xl font-black uppercase text-xs tracking-wider transition-all active:scale-95 ${
-                      activeProtocolId === protocol.id
-                        ? 'bg-red-600 text-white'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    {protocol.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-slate-600 mt-2">{activeProtocol.description}</p>
-            </div>
 
             {/* Backup/Restore Section */}
             <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl">
