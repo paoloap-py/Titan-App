@@ -112,6 +112,133 @@ const MUSCLE_VOLUME_DATA = [
 
 const DEFAULT_PROTOCOLS: Protocol[] = [
   {
+    id: 'bodytrainer',
+    name: 'Bodytrainer',
+    description: '160 sets per week. Push/Pull/Legs. 6-day split.',
+    accentColor: '#dc2626',
+    weeklySetTarget: 160,
+    rules: [
+      'Enforce mechanical tension (Tonnage)',
+      '0-1 RPE intensity',
+      'Finisher (🛑) 10s peak contraction',
+      'Anchor (⚓) 30s deep stretch',
+      'Compounds (⏱️) get 3 min rest, isolations 90s'
+    ],
+    days: [
+      {
+        day: 1,
+        name: "Push #1",
+        targetDuration: 90,
+        warmup: ["Band Pull-Aparts", "Shoulder Dislocations", "Light Tricep Pushdowns", "Cat-Cow"],
+        stretching: ["Doorway Stretch (60s)", "Wrist Stretch (60s)", "Child's Pose (60s)"],
+        exercises: [
+          "Super Vertical Chest Press: 3 x 8–10 🛑⚓⏱️",
+          "Dips Press: 3 x 8–10 ⚓⏱️",
+          "Super Inclined Chest Press: 3 x 8–10 ⚓⏱️",
+          "Seated Cable Chest Fly: 3 x 12–15 ⚓",
+          "Super French Press Machine: 3 x 10–12 ⏳⚓",
+          "Cable Kickbacks: 3 x 12–15 🏳️",
+          "Super Deltoide Press: 3 x 8–10 ⏱️",
+          "Cable Crunch: 3 x 12–15 ⏳"
+        ]
+      },
+      {
+        day: 2,
+        name: "Pull #1",
+        targetDuration: 90,
+        warmup: ["Dead Hangs", "Scapular Pull-ups", "Rotator Cuff Rotations", "Light Banded Curls"],
+        stretching: ["Cross-Body Shoulder Stretch (60s)", "Child's Pose (60s)", "Puppy Pose (60s)"],
+        exercises: [
+          "Super High Row: 3 x 8–10 🎗️🛑⚓⏱️",
+          "Super Rowing Circular: 3 x 8–10 🎗️⏱️",
+          "Seated Cable Row: 3 x 10–12 🎗️⚓⏱️",
+          "Reverse Cable Crossover: 3 x 12–15",
+          "Face Pulls: 3 x 12–15 ⏳",
+          "Bayesian Cable Curl: 3 x 10–12 ⚓",
+          "Machine Preacher Curl: 3 x 8–10 ⏳⚓",
+          "Dragon Flag: 3 x Failure"
+        ]
+      },
+      {
+        day: 3,
+        name: "Legs #1 + Core",
+        targetDuration: 100,
+        warmup: ["Leg Swings", "BW Lunges", "Cossack Squats", "Glute Bridges"],
+        stretching: ["Pigeon Pose (60s)", "Couch Stretch (60s)", "Calf Stretch (60s)"],
+        exercises: [
+          "Super Hack Squat: 3 x 6–8 ⚓⏱️",
+          "Super Pendulum Squat: 3 x 8–10 ⏱️",
+          "Walking Lunges: 3 x 10/leg ⏱️",
+          "RDL: 3 x 8–10 🎗️⚓⏱️",
+          "Kneeling Leg Curl: 3 x 10–12 🏳️",
+          "Standard Hip Thrust: 3 x 10–12 🛑",
+          "Standing Abductor: 2 x 12–15",
+          "Seated Calf Raise: 3 x 12–15 ⏳",
+          "Cable Crunch: 2 x 12–15 ⏳",
+          "Cable Twist: 2 x 12–15"
+        ]
+      },
+      {
+        day: 4,
+        name: "Push #2",
+        targetDuration: 100,
+        warmup: ["World's Greatest Stretch", "Thoracic Rotations", "Face Pulls", "Bird-Dogs"],
+        stretching: ["Doorway Stretch (60s)", "Hamstring Fold (60s)", "Child's Pose (60s)"],
+        exercises: [
+          "Super Deltoide Press: 4 x 8–10 ⏱️",
+          "Seated Dumbbell Shoulder Press: 3 x 8–10 ⏱️",
+          "Cable Lateral Raise: 3 x 12–15 🏳️",
+          "Cable Y-Raise: 3 x 12–15 🏳️",
+          "Behind the Back Cuffed Cable Lateral Raise: 3 x 12–15",
+          "Super Vertical Chest Press: 3 x 8–10 ⚓⏱️",
+          "High-to-Low Cable Fly: 2 x 12–15 🏳️",
+          "Overhead Cable Extension: 3 x 10–12 ⏳⚓🎗️",
+          "Triceps Machine: 2 x 12–15 🏳️",
+          "Cable External Rotation: 2 x 15–20"
+        ]
+      },
+      {
+        day: 5,
+        name: "Pull #2",
+        targetDuration: 100,
+        warmup: ["Arm Circles", "Air Squats", "Wall Slides", "Band Disconnects"],
+        stretching: ["Couch Stretch (60s)", "Doorway Stretch (60s)", "Child's Pose (60s)"],
+        exercises: [
+          "Super Lat Pulldown Circular: 3 x 10–12 🎗️🛑⚓⏱️",
+          "Super Low Row: 3 x 10–12 🎗️⏱️",
+          "Back Deltoids: 3 x 12–15 ⏳",
+          "Reverse Cable Crossover: 3 x 12–15",
+          "Hammer Preacher Curl: 3 x 8–10 ⏳⚓",
+          "EZ Bar Curl: 3 x 8–10 ⏳",
+          "Reverse EZ-Bar Curl: 2 x 12–15",
+          "Farmer's Walk: 3 x 30–40s 🎗️",
+          "Dragon Flag: 3 x Failure",
+          "Cable Crunch: 3 x 12–15 ⏳"
+        ]
+      },
+      {
+        day: 6,
+        name: "Legs #2 + Arms",
+        targetDuration: 100,
+        warmup: ["Leg Swings", "BW Lunges", "Glute Bridges", "Light Banded Curls"],
+        stretching: ["Pigeon Pose (60s)", "Couch Stretch (60s)", "Calf Stretch (60s)"],
+        exercises: [
+          "Super Leg Press 45° Dual System: 3 x 10–12 ⏱️",
+          "Bulgarian Split Squat: 3 x 8–10 ⏱️",
+          "Seated Leg Curl: 3 x 10–12 🏳️",
+          "Alternate Leg Extension: 2 x 12–15 🏳️⚓",
+          "Loaded Back Extension: 3 x 12–15",
+          "Standing Calf Raise: 3 x 12–15 ⏳",
+          "Incline Dumbbell Curl: 3 x 10–12 ⚓",
+          "Reverse EZ-Bar Curl: 2 x 12–15",
+          "Super French Press Machine: 3 x 10–12 ⏳⚓",
+          "Dragon Flag: 2 x Failure",
+          "Wrist Curl: 2 x 15–20"
+        ]
+      }
+    ]
+  },
+  {
     id: 'titan-133',
     name: 'TITAN 133',
     description: '133 sets per week. Extreme Hypertrophy. 1% Intensity Rules.',
@@ -625,7 +752,7 @@ const App: React.FC = () => {
     const newSession: WorkoutSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      week: Math.floor(sessions.length / 5) + 1, // 5 workout days per week
+      week: Math.floor(sessions.length / DEFAULT_PROTOCOLS[0].days.length) + 1,
       day: dayNum,
       protocolId: protocol.id,
       warmupCompleted: new Array(day.warmup?.length || 0).fill(false),
@@ -911,15 +1038,16 @@ const App: React.FC = () => {
             const lastSession = sessions[0]; // Sessions are sorted newest first
             const lastDay = lastSession.day;
 
-            // If last session was Day 5, check if it was today (rest day)
-            if (lastDay === 5) {
+            const totalDays = DEFAULT_PROTOCOLS[0].days.length;
+            // If last session was the final day, check if it was today (rest day)
+            if (lastDay === totalDays) {
               const lastDate = new Date(lastSession.date);
               const today = new Date();
               const isToday = lastDate.toDateString() === today.toDateString();
-              if (isToday) return null; // Rest day after Day 5
+              if (isToday) return null; // Rest day after last day
             }
 
-            return lastDay >= 5 ? 1 : lastDay + 1;
+            return lastDay >= totalDays ? 1 : lastDay + 1;
           };
           const todayWorkoutDay = getNextWorkoutDay();
           const todayProtocol = todayWorkoutDay ? DEFAULT_PROTOCOLS[0].days.find(d => d.day === todayWorkoutDay) : null;
