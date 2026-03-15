@@ -35,12 +35,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Legend
 } from 'recharts';
 import { 
   WorkoutSession, 
@@ -95,20 +89,6 @@ const parseMinReps = (targetRepRange: string): number => {
 // Helper to calculate volume (weight × reps) for PR comparison
 const calculateVolume = (weight: number, reps: number): number => weight * reps;
 
-// Muscle volume distribution data for radar chart
-const MUSCLE_VOLUME_DATA = [
-  { muscle: 'Shoulders', current: 20, target: 22 },
-  { muscle: 'Back', current: 15, target: 20 },
-  { muscle: 'Quads', current: 14, target: 16 },
-  { muscle: 'Chest', current: 14, target: 14 },
-  { muscle: 'Biceps', current: 12, target: 12 },
-  { muscle: 'Core', current: 12, target: 14 },
-  { muscle: 'Triceps', current: 11, target: 11 },
-  { muscle: 'Glutes', current: 10, target: 10 },
-  { muscle: 'Hamstrings', current: 10, target: 10 },
-  { muscle: 'Calves', current: 8, target: 8 },
-  { muscle: 'Forearms', current: 8, target: 8 },
-];
 
 const DEFAULT_PROTOCOLS: Protocol[] = [
   {
@@ -1141,63 +1121,9 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Weekly Muscle Volume + Progress Tracker Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Weekly Muscle Volume Radar Chart */}
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
-                <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2">Weekly Muscle Volume</h3>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={MUSCLE_VOLUME_DATA} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                      <PolarGrid stroke="#1e293b" />
-                      <PolarAngleAxis
-                        dataKey="muscle"
-                        tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}
-                      />
-                      <PolarRadiusAxis
-                        angle={90}
-                        domain={[0, 25]}
-                        tick={{ fill: '#64748b', fontSize: 8 }}
-                        axisLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                        labelStyle={{ color: '#fff', fontWeight: 700, textTransform: 'uppercase' }}
-                        formatter={(value: number, name: string) => [
-                          `${value} sets`,
-                          name === 'current' ? 'Current' : 'Target'
-                        ]}
-                      />
-                      <Radar
-                        name="target"
-                        dataKey="target"
-                        stroke="#64748b"
-                        fill="#374151"
-                        fillOpacity={0.3}
-                        strokeDasharray="4 4"
-                        strokeWidth={2}
-                      />
-                      <Radar
-                        name="current"
-                        dataKey="current"
-                        stroke="#dc2626"
-                        fill="#dc2626"
-                        fillOpacity={0.5}
-                        strokeWidth={2}
-                        style={{ filter: 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.5))' }}
-                      />
-                      <Legend
-                        wrapperStyle={{ paddingTop: 10 }}
-                        formatter={(value) => <span className="text-xs font-black text-slate-400 uppercase">{value}</span>}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Progress Tracker - 15/30/60/90 Days */}
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
-                <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Progress Tracker</h3>
+            {/* Progress Tracker - 15/30/60/90 Days */}
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-2xl">
+              <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest mb-4">Progress Tracker</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { label: '15 Days', ...progress15 },
@@ -1233,7 +1159,6 @@ const App: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
 
             {aiInsight && (
